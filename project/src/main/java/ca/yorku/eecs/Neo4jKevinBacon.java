@@ -19,6 +19,14 @@ public class Neo4jKevinBacon {
 	public Neo4jKevinBacon() {
 		uriDb = "bolt://localhost:7687"; // may need to change if you used a different port for your DBMS
 		Config config = Config.builder().withoutEncryption().build();
-		driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","1234"), config);
+		driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","123456"), config);
+	}
+	
+	public void insertMovie(String name, String movieId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, movieId: $y})", 
+					parameters("x", name, "y", movieId)));
+			session.close();
+		}
 	}
 }

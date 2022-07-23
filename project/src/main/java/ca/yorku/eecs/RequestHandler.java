@@ -43,21 +43,21 @@ public class RequestHandler implements HttpHandler{
 	}
 	
 	
-public void determineGet(HttpExchange request) {
+	public void determineGet(HttpExchange request) {
+			
+	}
+	
+	public void determinePut(HttpExchange request) {
 		
 	}
-
-public void determinePut(HttpExchange request) {
 	
-}
-
-public void handleAddActor() {
+	public void handleAddActor() {
+		
+	}
 	
-}
-
-public void handleAddMovie() {
-	
-}
+	public void handleAddMovie() {
+		
+	}
 	
 }
 
