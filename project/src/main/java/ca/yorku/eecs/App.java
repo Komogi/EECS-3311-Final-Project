@@ -20,6 +20,12 @@ public class App
         MovieAdder movieAdder = new MovieAdder(neo4j);
         server.createContext("/api/v1/addMovie", movieAdder::handle);
         
+        ActorAdder actorAdder = new ActorAdder(neo4j);
+        server.createContext("/api/v1/addActor", actorAdder::handle);
+        
+        RelationAdder relationAdder = new RelationAdder(neo4j);
+        server.createContext("/api/v1/addRelation", relationAdder::handle);
+        
         server.start(); // DO NOT CHANGE
         System.out.printf("Server started on port %d...\n", PORT); // DO NOT CHANGE
     }

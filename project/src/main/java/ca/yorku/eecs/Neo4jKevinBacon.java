@@ -29,4 +29,22 @@ public class Neo4jKevinBacon {
 			session.close();
 		}
 	}
+	
+	public void addActor(String name, String actorId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, actorId: $actorId})", 
+					parameters("name",name,"actorId", actorId)));
+			session.close();
+		}
+	}
+	
+	public void insertRelation(String actorId, String movieId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MATCH (a:Actor {actorId:$x}),"
+					+ "(m:Movie {movieId:$y})\n" + 
+					 "MERGE (a)-[r:ACTED_IN]->(m)\n" , parameters("x", actorId, "y", movieId)));
+			session.close();
+		}
+	}
+	
 }

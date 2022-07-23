@@ -1,22 +1,22 @@
 package ca.yorku.eecs;
 
 import java.io.IOException;
-
-
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import com.sun.net.httpserver.HttpExchange;
+
 import com.sun.net.httpserver.HttpHandler;
 
-public class MovieAdder implements HttpHandler{
 
-	private Neo4jKevinBacon neo4j;
+public class RelationAdder implements HttpHandler{
+private Neo4jKevinBacon neo4j;
 	
-	public MovieAdder(Neo4jKevinBacon neo4j) {
+	public RelationAdder(Neo4jKevinBacon neo4j) {
 		this.neo4j = neo4j;
 	}
 	
@@ -54,15 +54,15 @@ public class MovieAdder implements HttpHandler{
         Map<String, String> queryParam = splitQuery(query);
         System.out.println("queryParam: " + queryParam);
         
-        String name = queryParam.get("name").toString();
+        String actorId = queryParam.get("actorId").toString();
         String movieId = queryParam.get("movieId").toString();
         
         // add code for incorrect parameters
         
         // Do ADD on neo4j server
-        neo4j.insertMovie(name, movieId);
+        neo4j.insertRelation(actorId, movieId);
         
-        String response = name + " added successfully.";
+        String response = "Relation added successfully.";
         sendString(request, response, 200);
     }
     
@@ -77,5 +77,3 @@ public class MovieAdder implements HttpHandler{
         return query_pairs;
     }
 }
-
-	
