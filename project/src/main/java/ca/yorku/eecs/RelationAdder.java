@@ -60,7 +60,7 @@ private Neo4jKevinBacon neo4j;
         // add code for incorrect parameters
         
         // Do ADD on neo4j server
-        neo4j.insertRelation(actorId, movieId);
+        neo4j.addRelationship(actorId, movieId);
         
         String response = "Relation added successfully.";
         sendString(request, response, 200);

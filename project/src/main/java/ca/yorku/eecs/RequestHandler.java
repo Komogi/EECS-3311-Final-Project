@@ -33,7 +33,7 @@ public class RequestHandler implements HttpHandler{
         
     	
         if (splitRawPath.get(splitRawPath.size() - 1) == "v1") {
-        	// Throw  error
+        	// throw error, send string?
         }
         else {
         	handleMethod = splitRawPath.get(splitRawPath.size() - 1);
@@ -43,22 +43,28 @@ public class RequestHandler implements HttpHandler{
              if(request.getRequestMethod().equals("PUT")) {
             	 
                  switch(handleMethod) {
-                 case "addMovie":
-                	 addMovie(request, splitQuery(query));
-                	 break;
-                	 
-                 case "addActor":
-                	 addActor(request, splitQuery(query));
-                	 break;
+	                 case "addMovie":
+	                	 addMovie(request, splitQuery(query));
+	                	 break;
+	                	 
+	                 case "addActor":
+	                	 addActor(request, splitQuery(query));
+	                	 break;
+	                	 
+	                 case "addRelationship":
+	                	 addRelationship(request, splitQuery(query));
+	                	 break;
                  }
              }
-           
              else if (request.getRequestMethod().equals("GET")) {
-            	 
+            	 // TODO
              } 
+             else {
+            	 sendString(request, "Request not found\n", 404);
+             }
         } catch (Exception e) {
         	e.printStackTrace();
-//      	sendString(request, "Server error\n", 500);
+        	sendString(request, "Server error\n", 500);
         }
     }
 
@@ -68,8 +74,7 @@ public class RequestHandler implements HttpHandler{
         
         // add code for incorrect parameters
         
-        // Do ADD on neo4j server
-        neo4j.insertMovie(name, movieId);
+        neo4j.addMovie(name, movieId);
         
         String response = name + " added successfully.";
         sendString(request, response, 200);
@@ -81,10 +86,21 @@ public class RequestHandler implements HttpHandler{
         
         // add code for incorrect parameters
         
-        // Do ADD on neo4j server
         neo4j.addActor(name, actorId);
         
         String response = name + " added successfully.";
+        sendString(request, response, 200);
+    }
+    
+    public void addRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    	String actorId = queryParam.get("actorId").toString();
+        String movieId = queryParam.get("movieId").toString();
+        
+        // add code for incorrect parameters
+        
+        neo4j.addRelationship(actorId, movieId);
+        
+        String response = "ACTED_IN relationship added successfully.";
         sendString(request, response, 200);
     }
     

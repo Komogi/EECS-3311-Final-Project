@@ -22,7 +22,7 @@ public class Neo4jKevinBacon {
 		driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","123456"), config);
 	}
 	
-	public void insertMovie(String name, String movieId) {
+	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, movieId: $y})", 
 					parameters("x", name, "y", movieId)));
@@ -38,7 +38,7 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
-	public void insertRelation(String actorId, String movieId) {
+	public void addRelationship(String actorId, String movieId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MATCH (a:Actor {actorId:$x}),"
 					+ "(m:Movie {movieId:$y})\n" + 

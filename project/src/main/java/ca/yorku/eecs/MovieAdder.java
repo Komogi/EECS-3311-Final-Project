@@ -61,7 +61,7 @@ public class MovieAdder implements HttpHandler{
         // add code for incorrect parameters
         
         // Do ADD on neo4j server
-        neo4j.insertMovie(name, movieId);
+        neo4j.addMovie(name, movieId);
         
         String response = name + " added successfully.";
         sendString(request, response, 200);
