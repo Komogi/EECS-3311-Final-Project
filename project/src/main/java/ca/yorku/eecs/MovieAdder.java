@@ -50,6 +50,7 @@ public class MovieAdder implements HttpHandler{
     	
         URI uri = request.getRequestURI();
         String query = uri.getQuery();
+        System.out.println(uri.getRawPath());
         System.out.println("query: " + query);
         Map<String, String> queryParam = splitQuery(query);
         System.out.println("queryParam: " + queryParam);

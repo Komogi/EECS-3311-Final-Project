@@ -19,6 +19,10 @@ public class AppTest
     {
         super( testName );
     }
+    
+    private void testAddMoviePass() {
+    	
+    }
 
     /**
      * @return the suite of tests being tested
