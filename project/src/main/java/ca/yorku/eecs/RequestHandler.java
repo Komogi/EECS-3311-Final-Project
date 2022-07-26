@@ -2,6 +2,7 @@ package ca.yorku.eecs;
 
 import java.io.IOException;
 
+
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -9,6 +10,10 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+
+import org.json.JSONObject;
+//import org.jcp.xml.dsig.internal.dom.Utils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -54,10 +59,36 @@ public class RequestHandler implements HttpHandler{
 	                 case "addRelationship":
 	                	 addRelationship(request, splitQuery(query));
 	                	 break;
+	                 
+	                 case "addStreamingService":
+	                	 addStreamingService(request, splitQuery(query));
+	                	 break;
                  }
              }
              else if (request.getRequestMethod().equals("GET")) {
             	 // TODO
+            	 switch(handleMethod) {
+            	 case "getMovie":
+            		 getMovie(request, splitQuery(query));
+            		 break;
+            		 
+            	 case "getActor":
+            		 getActor(request, splitQuery(query));
+            		 break;
+            		 
+            	 case "hasRelationship":
+            		 hasRelationship(request, splitQuery(query));
+            		 break;
+            		 
+            	 case "computeBaconNumber":
+            		 computeBaconNumber(request, splitQuery(query));
+            		 break;
+            		 
+            	 case "computeBaconPath":
+            		 computeBaconPath(request, splitQuery(query));
+            		 break;
+            		 
+            	 }
              } 
              else {
             	 sendString(request, "Request not found\n", 404);
@@ -69,27 +100,65 @@ public class RequestHandler implements HttpHandler{
     }
 
     public void addMovie(HttpExchange request, Map<String, String> queryParam) throws IOException {
-    	String name = queryParam.get("name").toString();
-        String movieId = queryParam.get("movieId").toString();
         
-        // add code for incorrect parameters
+        String name;
+        String movieId;
         
-        neo4j.addMovie(name, movieId);
-        
-        String response = name + " added successfully.";
-        sendString(request, response, 200);
+        if (queryParam.containsKey("name") && queryParam.containsKey("movieId")) {
+            
+            name =  queryParam.get("name");
+            movieId = queryParam.get("movieId");
+            
+            neo4j.addMovie(name, movieId);
+            
+            String response = name + " added successfully.";
+            sendString(request, response, 200);
+        }
+        else {
+            String response = "The request body is improperly formatted or missing required information.";
+            sendString(request, response, 400);
+        }
     }
     
     public void addActor(HttpExchange request, Map<String, String> queryParam) throws IOException {
-    	String name = queryParam.get("name").toString();
-        String actorId = queryParam.get("actorId").toString();
+    	String name;
+        String actorId;
         
         // add code for incorrect parameters
-        
-        neo4j.addActor(name, actorId);
-        
-        String response = name + " added successfully.";
-        sendString(request, response, 200);
+        if (queryParam.containsKey("name") && queryParam.containsKey("actorId")) {
+            
+            name =  queryParam.get("name");
+            actorId = queryParam.get("actorId");
+            
+            neo4j.addActor(name, actorId);
+            
+            String response = name + " added successfully.";
+            sendString(request, response, 200);
+        }
+        else {
+            String response = "The request body is improperly formatted or missing required information.";
+            sendString(request, response, 400);
+        }
+    }
+    
+    public void addStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	String name;
+    	String id;
+    	
+		if (queryParam.containsKey("name") && queryParam.containsKey("serviceId")) {
+		            
+		     name =  queryParam.get("name");
+		     id = queryParam.get("serviceId");
+		            
+		     neo4j.addStreamingService(name, id);
+		            
+		     String response = name + " added successfully.";
+		     sendString(request, response, 200);
+		        }
+		 else {
+		     String response = "The request body is improperly formatted or missing required information.";
+		     sendString(request, response, 400);
+		        }
     }
     
     public void addRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
@@ -104,6 +173,26 @@ public class RequestHandler implements HttpHandler{
         sendString(request, response, 200);
     }
     
+    public void getMovie(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	
+    }
+    
+    public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	
+    }
+    
+    public void hasRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	
+    }
+    
+    public void computeBaconNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    
+    	
+    }
+    
+    public void computeBaconPath(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	
+    }
     private static ArrayList<String> splitRawPath(String rawPath) throws UnsupportedEncodingException {
         
     	ArrayList<String> result = new ArrayList<String>();
@@ -116,6 +205,8 @@ public class RequestHandler implements HttpHandler{
 
         return result;
     }
+    
+    
     
     // From Adder.java
     private static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {

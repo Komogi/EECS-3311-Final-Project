@@ -1,5 +1,5 @@
 package ca.yorku.eecs;
-
+import java.io.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -55,9 +55,40 @@ private Neo4jKevinBacon neo4j;
         String name = queryParam.get("name").toString();
         String actorId = queryParam.get("actorId").toString();
         
-        // add code for incorrect parameters
-        
-        // Do ADD on neo4j server
+  
+      try {
+    	  int i = Integer.parseInt(name);
+    	  String response = name + " --> invalid name";
+    	  sendString(request, response, 400);
+    	  
+      }catch(NumberFormatException nfe){
+    	  
+      }
+      
+      try {
+    	  double d = Double.parseDouble(name);
+    	  String response = name + " --> invalid name";
+    	  sendString(request, response, 400);
+      }catch(NumberFormatException nfe){
+    	  
+      }
+      
+      try {
+    	  double d = Double.parseDouble(actorId);
+    	  String response = actorId + " --> invalid actorId";
+    	  sendString(request, response, 400);
+      }catch(NumberFormatException nfe){
+    	  
+      }
+      try {
+    	  int i = Integer.parseInt(actorId);
+    	  String response = actorId + " --> invalid actorId";
+    	  sendString(request, response, 400);
+    	  
+      }catch(NumberFormatException nfe){
+    	  
+      }
+      
         neo4j.addActor(name, actorId);
         
         String response = name + " added successfully.";

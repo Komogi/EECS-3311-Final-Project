@@ -1,7 +1,7 @@
 package ca.yorku.eecs;
 import static org.neo4j.driver.v1.Values.parameters;
 
-
+import org.json.JSONObject;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
@@ -47,7 +47,37 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
+	public void addStreamingService(String name, String serviceId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MERGE (a:Streaming-Service {name: $name, serviceId: $serviceId})", 
+					parameters("name",name,"serviceId", serviceId)));
+			session.close();
+		}
+	}
 	
+	public JSONObject getMovie(String movieId) {
+		JSONObject j = new JSONObject();
+		return j;
+		}
 	
+	public JSONObject getActor(String actorId) {
+		JSONObject j = new JSONObject();
+		return j;
+	}
+	
+	public JSONObject hasRelationship(String actorId, String movieId) {
+		JSONObject j = new JSONObject();
+		return j;
+	}
+	
+	public JSONObject computerBaconNumber(String actorId) {
+		JSONObject j = new JSONObject();
+		return j;
+	}
+	
+	public JSONObject computeBaconPath(String actorId) {
+		JSONObject j = new JSONObject();
+		return j;
+	}
 	
 }
