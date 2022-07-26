@@ -250,6 +250,11 @@ public class RequestHandler implements HttpHandler{
     
     public void getMovie(HttpExchange request, Map<String, String> queryParam) throws IOException{
     	
+    	String movieId = queryParam.get("movieId");
+    	
+    	String response = neo4j.getMovie(movieId);
+    	sendString(request, response, 200);
+    	
     }
     
     public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{

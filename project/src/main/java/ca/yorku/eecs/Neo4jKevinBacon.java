@@ -1,6 +1,9 @@
 package ca.yorku.eecs;
 import static org.neo4j.driver.v1.Values.parameters;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.json.JSONObject;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Config;
@@ -9,6 +12,8 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
+
+import com.sun.net.httpserver.HttpExchange;
 
 
 public class Neo4jKevinBacon {
@@ -57,10 +62,30 @@ public class Neo4jKevinBacon {
 	}
 	
 	// GET REQUESTS
+	 
 
-	public JSONObject getMovie(String movieId) {
-		JSONObject j = new JSONObject();
-		return j;
+	public String getMovie(String movieId) {
+		String result = "";
+		
+    	try (Session session = driver.session())
+        {
+        	try (Transaction tx = session.beginTransaction()) {
+        		StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.movieId=$x RETURN m.name"
+						,parameters("x", movieId) );
+        		StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.movieId=$x RETURN a.actorId",parameters("x",movieId));
+        		while(node_boolean.hasNext()) {
+        			
+            		result += node_boolean.next();
+            		//TODO: Formatting to JSON body format
+            	}
+        		while(node_boolean2.hasNext()) {
+        			//TODO: Convert to list, process list results to get actorIds and format to JSON body format
+        			result+= node_boolean2.next();
+        		}
+        	}
+        	
+        }
+    	return result;
 	}
 	
 	public JSONObject getActor(String actorId) {
