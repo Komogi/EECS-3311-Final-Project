@@ -1,8 +1,6 @@
 package ca.yorku.eecs;
 
 import java.io.IOException;
-
-
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -10,7 +8,6 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 
 import org.json.JSONObject;
 //import org.jcp.xml.dsig.internal.dom.Utils;
@@ -35,7 +32,6 @@ public class RequestHandler implements HttpHandler{
         String query = uri.getQuery();
         
         ArrayList<String> splitRawPath = splitRawPath(rawPath);
-        
     	
         if (splitRawPath.get(splitRawPath.size() - 1) == "v1") {
         	// throw error, send string?
@@ -59,7 +55,7 @@ public class RequestHandler implements HttpHandler{
 	                 case "addRelationship":
 	                	 addRelationship(request, splitQuery(query));
 	                	 break;
-	                 
+	                	 
 	                 case "addStreamingService":
 	                	 addStreamingService(request, splitQuery(query));
 	                	 break;
@@ -68,27 +64,38 @@ public class RequestHandler implements HttpHandler{
              else if (request.getRequestMethod().equals("GET")) {
             	 // TODO
             	 switch(handleMethod) {
-            	 case "getMovie":
-            		 getMovie(request, splitQuery(query));
-            		 break;
-            		 
-            	 case "getActor":
-            		 getActor(request, splitQuery(query));
-            		 break;
-            		 
-            	 case "hasRelationship":
-            		 hasRelationship(request, splitQuery(query));
-            		 break;
-            		 
-            	 case "computeBaconNumber":
-            		 computeBaconNumber(request, splitQuery(query));
-            		 break;
-            		 
-            	 case "computeBaconPath":
-            		 computeBaconPath(request, splitQuery(query));
-            		 break;
-            		 
-            	 }
+					case "getMovie":
+						getMovie(request, splitQuery(query));
+						break;
+						
+					case "getActor":
+						getActor(request, splitQuery(query));
+						break;
+						
+					case "hasRelationship":
+						hasRelationship(request, splitQuery(query));
+						break;
+						
+					case "computeBaconNumber":
+						computeBaconNumber(request, splitQuery(query));
+						break;
+						
+					case "computeBaconPath":
+						computeBaconPath(request, splitQuery(query));
+						break;
+
+            	 	 case "getMoviesOnStreamingService":
+            	 		 getMoviesOnStreamingService(request, splitQuery(query));
+            	 		 break;
+            	 
+	                 case "getActorNumber":
+	                	 getActorNumber(request, splitQuery(query));
+	                	 break;
+	                	 
+	                 case "getMostProlificActor":
+	                	 getMostProlificActor(request, splitQuery(query));
+	                	 break;
+	             }
              } 
              else {
             	 sendString(request, "Request not found\n", 404);
@@ -118,6 +125,7 @@ public class RequestHandler implements HttpHandler{
             String response = "The request body is improperly formatted or missing required information.";
             sendString(request, response, 400);
         }
+
     }
     
     public void addActor(HttpExchange request, Map<String, String> queryParam) throws IOException {
@@ -141,35 +149,102 @@ public class RequestHandler implements HttpHandler{
         }
     }
     
-    public void addStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException{
-    	String name;
-    	String id;
+    public void addRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    	String actorId;
+    	String movieId;
     	
-		if (queryParam.containsKey("name") && queryParam.containsKey("serviceId")) {
-		            
-		     name =  queryParam.get("name");
-		     id = queryParam.get("serviceId");
-		            
-		     neo4j.addStreamingService(name, id);
-		            
-		     String response = name + " added successfully.";
-		     sendString(request, response, 200);
-		        }
-		 else {
-		     String response = "The request body is improperly formatted or missing required information.";
-		     sendString(request, response, 400);
-		        }
+    	// TODO: If either actorId or movieId does not exist in the database, return 404
+    	// TODO: If relationship already exists, return 400
+    	
+    	if (queryParam.containsKey("actorId") && queryParam.containsKey("movieId")) {
+    		
+    		actorId = queryParam.get("actorId");
+    		movieId = queryParam.get("movieId");
+    		
+    		neo4j.addRelationship(actorId, movieId);
+            
+            String response = "ACTED_IN relationship added successfully.";
+            sendString(request, response, 200);
+    	}
+    	else {
+    		String response = "The request body is improperly formatted or missing required information.";
+    		sendString(request, response, 400);
+    	}
     }
     
-    public void addRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
-    	String actorId = queryParam.get("actorId").toString();
-        String movieId = queryParam.get("movieId").toString();
+    public void addStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    	String name;
+    	String streamingServiceId;
+    	
+    	// TODO: If streamingServiceId already exists in database, return 400
+    	
+    	if (queryParam.containsKey("name") && queryParam.containsKey("streamingServiceId")) {
+    		
+    		name = queryParam.get("name");
+    		streamingServiceId = queryParam.get("streamingService");
+    		
+    		neo4j.addStreamingService(name, streamingServiceId);
+            
+            String response = name + " added successfully.";
+            sendString(request, response, 200);
+    	}
+    	else {
+    		String response = "The request body is improperly formatted or missing required information.";
+    		sendString(request, response, 400);
+    	}
+    }
+    
+   public void getMoviesOnStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    
+    	String streamingServiceId;
+    	
+    	// TODO: If streamingServiceId does not exist in the datbaase, return 404
+    	
+    	if (queryParam.containsKey("streamingServiceId")) {
+    		
+    		streamingServiceId = queryParam.get("streamingServiceId");
+    		
+    		neo4j.getMoviesOnStreamingService(streamingServiceId); // TODO: assign to response
+            
+            String response = "???";
+            sendString(request, response, 200);
+    	}
+    	else {
+    		String response = "The request body is improperly formatted or missing required information.";
+    		sendString(request, response, 400);
+    	}
+    }
+    
+    public void getActorNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    	
+    	String firstActorId;
+    	String secondActorId;
+    	
+    	// TODO: If either firstActorId or secondActorId does not exist in the database, return 404
+    	
+    	if (queryParam.containsKey("firstActorId") && queryParam.containsKey("secondActorId")) {
+    		
+    		firstActorId = queryParam.get("firstActorId");
+    		secondActorId = queryParam.get("secondActorId");
+    		
+    		neo4j.getActorNumber(firstActorId, secondActorId); // TODO: assign to response
+            
+            String response = "???";
+            sendString(request, response, 200);
+    	}
+    	else {
+    		String response = "The request body is improperly formatted or missing required information.";
+    		sendString(request, response, 400);
+    	}
+    }
+    
+    public void getMostProlificActor(HttpExchange request, Map<String, String> queryParam) throws IOException {
+	
+		// TODO: If there are no actors in the database, return 404
+		
+		neo4j.getMostProlificActor(); // TODO: Assign to response
         
-        // add code for incorrect parameters
-        
-        neo4j.addRelationship(actorId, movieId);
-        
-        String response = "ACTED_IN relationship added successfully.";
+        String response = "???";
         sendString(request, response, 200);
     }
     

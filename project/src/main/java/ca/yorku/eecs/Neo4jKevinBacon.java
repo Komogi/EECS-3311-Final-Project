@@ -22,6 +22,7 @@ public class Neo4jKevinBacon {
 		driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","123456"), config);
 	}
 	
+	// PUT REQUESTS
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, movieId: $y})", 
@@ -33,7 +34,7 @@ public class Neo4jKevinBacon {
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, actorId: $actorId})", 
-					parameters("name",name,"actorId", actorId)));
+					parameters("name", name,"actorId", actorId)));
 			session.close();
 		}
 	}
@@ -47,18 +48,20 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
-	public void addStreamingService(String name, String serviceId) {
+	public void addStreamingService(String name, String streamingServiceId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (a:Streaming-Service {name: $name, serviceId: $serviceId})", 
-					parameters("name",name,"serviceId", serviceId)));
+			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
+					parameters("name", name,"actorId", streamingServiceId)));
 			session.close();
 		}
 	}
 	
+	// GET REQUESTS
+
 	public JSONObject getMovie(String movieId) {
 		JSONObject j = new JSONObject();
 		return j;
-		}
+	}
 	
 	public JSONObject getActor(String actorId) {
 		JSONObject j = new JSONObject();
@@ -78,6 +81,62 @@ public class Neo4jKevinBacon {
 	public JSONObject computeBaconPath(String actorId) {
 		JSONObject j = new JSONObject();
 		return j;
+	}
+
+	public void addMovieStreamingServiceRelationship(String movieId, String streamingServiceId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {movieId:$x}),"
+					+ "(s:StreamingService {streamingServiceId:$y})\n" + 
+					 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId)));
+			session.close();
+		}
+	}
+	
+	// TODO: Find all movies that has a STREAMING_ON relationship with the streamingServiceId, and return them
+	public StatementResult getMoviesOnStreamingService(String streamingServiceId) {
+		
+		StatementResult node_boolean;
+		
+		try (Session session = driver.session())
+        {
+        	try (Transaction tx = session.beginTransaction()) {
+        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
+        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool"
+						,parameters("x", streamingServiceId));
+        	}
+        }
+		
+		return node_boolean;
+	}
+	
+	// TOOD: Calculate Actor Number and Return It
+	public StatementResult getActorNumber(String actor1Id, String actor2Id) {
+		StatementResult node_boolean;
+		
+		try (Session session = driver.session())
+        {
+        	try (Transaction tx = session.beginTransaction()) {
+        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
+        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool");
+        	}
+        }
+		
+		return node_boolean;
+	}
+	
+	// TODO: Calculate Most Prolific Actor and Return It
+	public StatementResult getMostProlificActor() {
+		StatementResult node_boolean;
+		
+		try (Session session = driver.session())
+        {
+        	try (Transaction tx = session.beginTransaction()) {
+        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
+        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool");
+        	}
+        }
+		
+		return node_boolean;
 	}
 	
 }
