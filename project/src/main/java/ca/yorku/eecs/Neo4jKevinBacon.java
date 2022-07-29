@@ -4,6 +4,7 @@ import static org.neo4j.driver.v1.Values.parameters;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -93,10 +94,8 @@ public class Neo4jKevinBacon {
                 while(node_boolean.hasNext()) {
                     
                     tmp.add(node_boolean.next().toString());
-                    //TODO: Formatting to JSON body format
                 }
                 while(node_boolean2.hasNext()) {
-                    //TODO: Convert to list, process list results to get actorIds and format to JSON body format
                     tmp.add(node_boolean2.next().toString());
                 }
             }
@@ -134,12 +133,10 @@ public class Neo4jKevinBacon {
                 StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.actorId=$x RETURN m.movieId",parameters("x",actorId));
                 
                 while(node_boolean.hasNext()) {
-                    
                     tmp.add(node_boolean.next().toString());
-                    //TODO: Formatting to JSON body format
                 }
+                
                 while(node_boolean2.hasNext()) {
-                    //TODO: Convert to list, process list results to get actorIds and format to JSON body format
                     tmp.add(node_boolean2.next().toString());
                 }
             }
@@ -150,7 +147,6 @@ public class Neo4jKevinBacon {
             	tmp2= tmp2.substring(0,tmp2.length()-1);
             	tmp.set(i, tmp2);
             }
-           
 
             result = String.format("{\n \"actorId\": %s,\n", actorId);
             result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
@@ -251,20 +247,58 @@ public class Neo4jKevinBacon {
 	}
 	
 	// TODO: Calculate Most Prolific Actor and Return It
-	public StatementResult getMostProlificActor() {
+	public String getMostProlificActor() {
+		
+		String result = "";
+		String mostProlificActorId = "";
 		StatementResult node_boolean;
 		
 		ArrayList<String> actors = new ArrayList<String>();
+		HashMap<String, Integer> actorsCount = new HashMap<String, Integer>();
 		
 		try (Session session = driver.session())
         {
         	try (Transaction tx = session.beginTransaction()) {
-        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
-        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool");
+        		node_boolean = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.actorId");
         	}
+        	
+        	while (node_boolean.hasNext()) {
+        		actors.add(node_boolean.next().toString());
+        	}
+        	
+        	// Isolate actorIDs
+	    	for(int i = 0; i < actors.size(); i++) {        	
+	         	String tmp = actors.get(i).split("\"")[2];
+	         	tmp = tmp.substring(0, tmp.length() - 1);
+	         	actors.set(i, tmp);
+	        }
+	    	
+	    	// Add and Count all distinct Actors
+	    	for(int i = 0; i < actors.size(); i++) {
+	    		if(!actorsCount.containsKey(actors.get(i))) {
+	    			actorsCount.put(actors.get(i), 1);
+	    		}
+	    		else {
+	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i) + 1));
+	    		}
+	    	}
+	    	
+	    	Integer max = 0;
+        	
+	    	// Get Actor with the highest Count
+	    	for (String actorId: actorsCount.keySet()) {
+	    		if (actorsCount.get(actorId) > max) {
+	    			max = actorsCount.get(actorId);
+	    			mostProlificActorId = actorId;
+	    		}
+	    	}
+	    	
+	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
+	    	
+	    	result = getActor(mostProlificActorId);
         }
 		
-		return node_boolean;
+		return result;
 	}
 	
 }
