@@ -1,7 +1,9 @@
 package ca.yorku.eecs;
 import static org.neo4j.driver.v1.Values.parameters;
 
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -14,7 +16,8 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
 
 import com.sun.net.httpserver.HttpExchange;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Neo4jKevinBacon {
 
@@ -66,36 +69,125 @@ public class Neo4jKevinBacon {
 
 	public String getMovie(String movieId) {
 		String result = "";
-		
-    	try (Session session = driver.session())
+		String tmp2 = "";
+        String[] x = new String[100];
+        ArrayList<String> tmp = new ArrayList<String>();
+        
+        try (Session session = driver.session())
         {
-        	try (Transaction tx = session.beginTransaction()) {
-        		StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.movieId=$x RETURN m.name"
-						,parameters("x", movieId) );
-        		StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.movieId=$x RETURN a.actorId",parameters("x",movieId));
-        		while(node_boolean.hasNext()) {
-        			
-            		result += node_boolean.next();
-            		//TODO: Formatting to JSON body format
-            	}
-        		while(node_boolean2.hasNext()) {
-        			//TODO: Convert to list, process list results to get actorIds and format to JSON body format
-        			result+= node_boolean2.next();
-        		}
-        	}
-        	
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.movieId=$x RETURN m.name"
+                        ,parameters("x", movieId) );
+
+                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.movieId=$x RETURN a.actorId",parameters("x",movieId));
+                
+                while(node_boolean.hasNext()) {
+                    
+                    tmp.add(node_boolean.next().toString());
+                    //TODO: Formatting to JSON body format
+                }
+                while(node_boolean2.hasNext()) {
+                    //TODO: Convert to list, process list results to get actorIds and format to JSON body format
+                    tmp.add(node_boolean2.next().toString());
+                }
+            }
+            for(int i = 0; i < tmp.size(); i++) {
+            	
+            	tmp2=tmp.get(i).split("\"")[2];
+            	tmp2= tmp2.substring(0,tmp2.length()-1);
+            	tmp.set(i, tmp2);
+            }
+
+            result = String.format("{\n \"movieId\": %s,\n", movieId);
+            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+            result += "\"actors\": [\n";
+            for(int i = 1; i < tmp.size();i++) {
+            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            }
+            result+="    ]\n}";
         }
-    	return result;
+        return result;
 	}
 	
-	public JSONObject getActor(String actorId) {
-		JSONObject j = new JSONObject();
-		return j;
+	
+	public String getActor(String actorId) {
+		String result = "";
+		String tmp2 = "";
+        
+        ArrayList<String> tmp = new ArrayList<String>();
+        
+        try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.actorId=$x RETURN a.name"
+                        ,parameters("x", actorId) );
+
+                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.actorId=$x RETURN m.movieId",parameters("x",actorId));
+                
+                while(node_boolean.hasNext()) {
+                    
+                    tmp.add(node_boolean.next().toString());
+                    //TODO: Formatting to JSON body format
+                }
+                while(node_boolean2.hasNext()) {
+                    //TODO: Convert to list, process list results to get actorIds and format to JSON body format
+                    tmp.add(node_boolean2.next().toString());
+                }
+            }
+           
+            for(int i = 0; i < tmp.size(); i++) {
+            	
+            	tmp2=tmp.get(i).split("\"")[2];
+            	tmp2= tmp2.substring(0,tmp2.length()-1);
+            	tmp.set(i, tmp2);
+            }
+           
+
+            result = String.format("{\n \"actorId\": %s,\n", actorId);
+            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+            result += "\"movies\": [\n";
+            for(int i = 1; i < tmp.size();i++) {
+            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            }
+            result+="    ]\n}";
+        }
+        return result;
 	}
 	
-	public JSONObject hasRelationship(String actorId, String movieId) {
-		JSONObject j = new JSONObject();
-		return j;
+//	"MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+//+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
+//parameters("x",actorId, "y", movieId)));
+	
+	public String hasRelationship(String actorId, String movieId) {
+		String result = "";
+		String[] a = new String[10];
+		String ans = "";
+		
+		 try (Session session = driver.session())
+	        {
+	            try (Transaction tx = session.beginTransaction()) {
+	                StatementResult node_boolean = tx.run("MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+	                		+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
+	                		parameters("x",actorId, "y", movieId));
+
+	                ans = node_boolean.single().toString();
+
+	            }
+	            
+	               a = ans.split(":");
+	               int i = 0;  
+	               ans="";
+	               while(i < 5) {
+	            	   ans+= a[2].charAt(i);
+	            	   i++;
+	               }
+	        	  
+	        
+	        }
+		 result = "{\n";
+		 result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
+		 
+		return result;
 	}
 	
 	public JSONObject computerBaconNumber(String actorId) {

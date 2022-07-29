@@ -243,6 +243,8 @@ public class RequestHandler implements HttpHandler{
 		// TODO: If there are no actors in the database, return 404
 		
 		neo4j.getMostProlificActor(); // TODO: Assign to response
+		
+		
         
         String response = "???";
         sendString(request, response, 200);
@@ -258,11 +260,17 @@ public class RequestHandler implements HttpHandler{
     }
     
     public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	String actorId = queryParam.get("actorId");
     	
+    	String response = neo4j.getActor(actorId);
+    	sendString(request, response, 200);
     }
     
     public void hasRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException{
-    	
+    	String actorId = queryParam.get("actorId");
+    	String movieId = queryParam.get("movieId");
+    	String response = neo4j.hasRelationship(actorId,movieId);
+    	sendString(request, response, 200);
     }
     
     public void computeBaconNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
