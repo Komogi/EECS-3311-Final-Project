@@ -59,7 +59,16 @@ public class Neo4jKevinBacon {
 	public void addStreamingService(String name, String streamingServiceId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
-					parameters("name", name,"actorId", streamingServiceId)));
+					parameters("name", name, "streamingServiceId", streamingServiceId)));
+			session.close();
+		}
+	}
+	
+	public void addStreamingOnRelationship(String movieId, String streamingServiceId) {
+		try (Session session = driver.session()){
+			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {movieId:$x}),"
+					+ "(s:StreamingService {streamingServiceId:$y})\n" + 
+					 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId)));
 			session.close();
 		}
 	}
@@ -244,6 +253,8 @@ public class Neo4jKevinBacon {
 	// TODO: Calculate Most Prolific Actor and Return It
 	public StatementResult getMostProlificActor() {
 		StatementResult node_boolean;
+		
+		ArrayList<String> actors = new ArrayList<String>();
 		
 		try (Session session = driver.session())
         {

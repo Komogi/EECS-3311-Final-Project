@@ -59,6 +59,10 @@ public class RequestHandler implements HttpHandler{
 	                 case "addStreamingService":
 	                	 addStreamingService(request, splitQuery(query));
 	                	 break;
+	                	 
+	                 case "addStreamingOnRelationship":
+	                	 addStreamingOnRelationship(request, splitQuery(query));
+	                	 break;
                  }
              }
              else if (request.getRequestMethod().equals("GET")) {
@@ -181,11 +185,34 @@ public class RequestHandler implements HttpHandler{
     	if (queryParam.containsKey("name") && queryParam.containsKey("streamingServiceId")) {
     		
     		name = queryParam.get("name");
-    		streamingServiceId = queryParam.get("streamingService");
+    		streamingServiceId = queryParam.get("streamingServiceId");
     		
     		neo4j.addStreamingService(name, streamingServiceId);
             
             String response = name + " added successfully.";
+            sendString(request, response, 200);
+    	}
+    	else {
+    		String response = "The request body is improperly formatted or missing required information.";
+    		sendString(request, response, 400);
+    	}
+    }
+    
+    public void addStreamingOnRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    	String movieId;
+    	String streamingServiceId;
+    	
+    	// TODO: If either movieId or streamingServiceId does not exist in the database, return 404
+    	// TODO: If relationship already exists, return 400
+    	
+    	if (queryParam.containsKey("movieId") && queryParam.containsKey("streamingServiceId")) {
+    		
+    		movieId = queryParam.get("movieId");
+    		streamingServiceId = queryParam.get("streamingServiceId");
+    		
+    		neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
+            
+            String response = "STREAMING_ON relationship added successfully.";
             sendString(request, response, 200);
     	}
     	else {
