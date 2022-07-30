@@ -97,7 +97,7 @@ public class RequestHandler implements HttpHandler{
 	                	 break;
 	                	 
 	                 case "getMostProlificActor":
-	                	 getMostProlificActor(request, splitQuery(query));
+	                	 getMostProlificActor(request);
 	                	 break;
 	             }
              } 
@@ -230,10 +230,8 @@ public class RequestHandler implements HttpHandler{
     	if (queryParam.containsKey("streamingServiceId")) {
     		
     		streamingServiceId = queryParam.get("streamingServiceId");
-    		
-    		neo4j.getMoviesOnStreamingService(streamingServiceId); // TODO: assign to response
             
-            String response = "???";
+            String response = neo4j.getMoviesOnStreamingService(streamingServiceId);
             sendString(request, response, 200);
     	}
     	else {
@@ -265,15 +263,12 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void getMostProlificActor(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void getMostProlificActor(HttpExchange request) throws IOException {
 	
 		// TODO: If there are no actors in the database, return 404
+    	// TODO: If there are actors in the database, but none have acted in movies, return 404
 		
-		neo4j.getMostProlificActor(); // TODO: Assign to response
-		
-		
-        
-        String response = "???";
+		String response = neo4j.getMostProlificActor();
         sendString(request, response, 200);
     }
     
@@ -320,8 +315,6 @@ public class RequestHandler implements HttpHandler{
 
         return result;
     }
-    
-    
     
     // From Adder.java
     private static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {
