@@ -80,7 +80,6 @@ public class Neo4jKevinBacon {
 	public String getMovie(String movieId) {
 		String result = "";
 		String tmp2 = "";
-        String[] x = new String[100];
         ArrayList<String> tmp = new ArrayList<String>();
         
         try (Session session = driver.session())
@@ -109,9 +108,10 @@ public class Neo4jKevinBacon {
             result = String.format("{\n \"movieId\": %s,\n", movieId);
             result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
             result += "\"actors\": [\n";
-            for(int i = 1; i < tmp.size();i++) {
+            for(int i = 1; i < tmp.size() - 1;i++) {
             	result+= String.format("    \"%s\",\n",tmp.get(i));
             }
+            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
         }
         return result;
@@ -151,9 +151,10 @@ public class Neo4jKevinBacon {
             result = String.format("{\n \"actorId\": %s,\n", actorId);
             result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
             result += "\"movies\": [\n";
-            for(int i = 1; i < tmp.size();i++) {
+            for(int i = 1; i < tmp.size() - 1;i++) {
             	result+= String.format("    \"%s\",\n",tmp.get(i));
             }
+            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
         }
         return result;
@@ -168,29 +169,26 @@ public class Neo4jKevinBacon {
 		String[] a = new String[10];
 		String ans = "";
 		
-		 try (Session session = driver.session())
-	        {
-	            try (Transaction tx = session.beginTransaction()) {
-	                StatementResult node_boolean = tx.run("MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
-	                		+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
-	                		parameters("x",actorId, "y", movieId));
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+                		+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
+                		parameters("x",actorId, "y", movieId));
 
-	                ans = node_boolean.single().toString();
-
-	            }
-	            
-	               a = ans.split(":");
-	               int i = 0;  
-	               ans="";
-	               while(i < 5) {
-	            	   ans+= a[2].charAt(i);
-	            	   i++;
-	               }
-	        	  
-	        
-	        }
-		 result = "{\n";
-		 result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
+                ans = node_boolean.single().toString();
+            }
+            
+               a = ans.split(":");
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[2].charAt(i);
+            	   i++;
+               }
+        }
+		result = "{\n";
+		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
 		 
 		return result;
 	}
@@ -215,20 +213,39 @@ public class Neo4jKevinBacon {
 	}
 	
 	// TODO: Find all movies that has a STREAMING_ON relationship with the streamingServiceId, and return them
-	public StatementResult getMoviesOnStreamingService(String streamingServiceId) {
+	public String getMoviesOnStreamingService(String streamingServiceId) {
 		
-		StatementResult node_boolean;
-		
-		try (Session session = driver.session())
+		String result = "";
+		String tmp = "";
+        ArrayList<String> records = new ArrayList<String>();
+        
+        try (Session session = driver.session())
         {
-        	try (Transaction tx = session.beginTransaction()) {
-        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
-        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool"
-						,parameters("x", streamingServiceId));
-        	}
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.movieId",
+                		parameters("x", streamingServiceId));
+
+                while(moviesOnStreamingServiceResult.hasNext()) {
+                    records.add(moviesOnStreamingServiceResult.next().toString());
+                }
+            }
+            for(int i = 0; i < records.size(); i++) {
+            	
+            	tmp = records.get(i).split("\"")[2];
+            	tmp = tmp.substring(0, tmp.length() - 1);
+            	records.set(i, tmp);
+            }
+
+            result = String.format("{\n");
+            result += "\"movies\": [\n";
+            for(int i = 0; i < records.size() - 1; i++) {
+            	result += String.format("    \"%s\",\n", records.get(i));
+            }
+            result += String.format("    \"%s\"\n", records.get(records.size() - 1));
+            result +="    ]\n}";
         }
 		
-		return node_boolean;
+		return result;
 	}
 	
 	// TOOD: Calculate Actor Number and Return It

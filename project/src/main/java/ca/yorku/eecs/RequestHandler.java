@@ -230,10 +230,8 @@ public class RequestHandler implements HttpHandler{
     	if (queryParam.containsKey("streamingServiceId")) {
     		
     		streamingServiceId = queryParam.get("streamingServiceId");
-    		
-    		neo4j.getMoviesOnStreamingService(streamingServiceId); // TODO: assign to response
             
-            String response = "???";
+            String response = neo4j.getMoviesOnStreamingService(streamingServiceId);
             sendString(request, response, 200);
     	}
     	else {
@@ -317,8 +315,6 @@ public class RequestHandler implements HttpHandler{
 
         return result;
     }
-    
-    
     
     // From Adder.java
     private static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {
