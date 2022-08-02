@@ -57,21 +57,88 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
-	public void addStreamingService(String name, String streamingServiceId) {
+	public String addStreamingService(String name, String streamingServiceId) {
+		
+		String result = "200";
+		
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
-					parameters("name", name, "streamingServiceId", streamingServiceId)));
+			
+			try (Transaction tx = session.beginTransaction()) {
+				StatementResult statementResult = tx.run("MATCH (s:StreamingService) "
+						+ "WHERE s.streamingServiceId=$streamingServiceId RETURN count(s)", 
+						parameters("streamingServiceId", streamingServiceId));
+				
+				String queryResult = statementResult.next().toString();
+				
+				// Getting the count
+				queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+				
+				if (queryResult.equals("1")) {
+					result = "404";
+				}
+				else {
+					 tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
+							parameters("name", name, "streamingServiceId", streamingServiceId));
+				}
+			}
+			
 			session.close();
 		}
+		
+		return result;
 	}
 	
-	public void addStreamingOnRelationship(String movieId, String streamingServiceId) {
+	public String addStreamingOnRelationship(String movieId, String streamingServiceId) {
+		
+		String result = "200";
+		
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {movieId:$x}),"
-					+ "(s:StreamingService {streamingServiceId:$y})\n" + 
-					 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId)));
+			
+			try (Transaction tx = session.beginTransaction()) {
+				
+				StatementResult statementResult = tx.run("MATCH (m:Movie) "
+						+ "WHERE m.movieId=$movieId RETURN count(m)", 
+						parameters("movieId", movieId));
+				
+				String queryResult = statementResult.next().toString();
+				
+				String movieCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+				
+				statementResult = tx.run("MATCH (s:StreamingService) "
+						+ "WHERE s.streamingServiceId=$streamingServiceId RETURN count(s)", 
+						parameters("streamingServiceId", streamingServiceId));
+				
+				queryResult = statementResult.next().toString();
+				
+				String streamingServiceCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+				
+				if (movieCountResult.equals("0") || streamingServiceCountResult.equals("0")) {
+					result = "404";
+				}
+				else {
+					statementResult = tx.run("MATCH (m:Movie {movieId:$x})-[r:STREAMING_ON]->(s:StreamingService {streamingServiceId:$y})\n" + 
+							 "RETURN count(r)\n" , parameters("x", movieId, "y", streamingServiceId));
+					
+					queryResult = statementResult.next().toString();
+					
+					String streamingOnCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+					
+					System.out.println(streamingOnCountResult);
+					
+					if (streamingOnCountResult.equals("1")) {
+						result = "400";
+					}
+					else {
+						tx.run("MATCH (m:Movie {movieId:$x}), (s:StreamingService {streamingServiceId:$y})\n" + 
+								 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId));
+					}
+				}
+			}
+
 			session.close();
 		}
+		
+		return result;
 	}
 	
 	// GET REQUESTS
@@ -113,6 +180,8 @@ public class Neo4jKevinBacon {
             }
             result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
+            
+            session.close();
         }
         return result;
 	}
@@ -156,6 +225,8 @@ public class Neo4jKevinBacon {
             }
             result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
+            
+            session.close();
         }
         return result;
 	}
@@ -179,6 +250,7 @@ public class Neo4jKevinBacon {
                 ans = node_boolean.single().toString();
             }
             
+
                a = ans.split(":");
                int i = 0;  
                ans="";
@@ -186,6 +258,7 @@ public class Neo4jKevinBacon {
             	   ans+= a[1].charAt(i);
             	   i++;
                }
+
         }
 		result = "{\n";
 		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
@@ -273,27 +346,42 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.movieId",
-                		parameters("x", streamingServiceId));
-
-                while(moviesOnStreamingServiceResult.hasNext()) {
-                    records.add(moviesOnStreamingServiceResult.next().toString());
-                }
-            }
-            for(int i = 0; i < records.size(); i++) {
             	
-            	tmp = records.get(i).split("\"")[2];
-            	tmp = tmp.substring(0, tmp.length() - 1);
-            	records.set(i, tmp);
-            }
+            	StatementResult statementResult = tx.run("MATCH (s) WHERE s.streamingServiceId=$x RETURN count(s)",
+                		parameters("x", streamingServiceId));
+            	
+            	String queryResult = statementResult.next().toString();
+            	String streamingServiceCount = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+            	
+            	if (streamingServiceCount.equals("0")) {
+            		result = "404";
+            	}
+            	else {
+            		StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.movieId",
+                    		parameters("x", streamingServiceId));
 
-            result = String.format("{\n");
-            result += "\"movies\": [\n";
-            for(int i = 0; i < records.size() - 1; i++) {
-            	result += String.format("    \"%s\",\n", records.get(i));
+                    while(moviesOnStreamingServiceResult.hasNext()) {
+                        records.add(moviesOnStreamingServiceResult.next().toString());
+                    }
+                    
+                    for(int i = 0; i < records.size(); i++) {
+                    	
+                    	tmp = records.get(i).split("\"")[2];
+                    	tmp = tmp.substring(0, tmp.length() - 1);
+                    	records.set(i, tmp);
+                    }
+
+                    result = String.format("{\n");
+                    result += "\"movies\": [\n";
+                    for(int i = 0; i < records.size() - 1; i++) {
+                    	result += String.format("    \"%s\",\n", records.get(i));
+                    }
+                    result += String.format("    \"%s\"\n", records.get(records.size() - 1));
+                    result +="    ]\n}";
+            	}
             }
-            result += String.format("    \"%s\"\n", records.get(records.size() - 1));
-            result +="    ]\n}";
+            
+            session.close();
         }
 		
 		return result;
@@ -309,6 +397,8 @@ public class Neo4jKevinBacon {
         		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
         				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool");
         	}
+        	
+        	session.close();
         }
 		
 		return node_boolean;
@@ -371,6 +461,11 @@ public class Neo4jKevinBacon {
 	    	}
 	    	
 	    	
+
+	    	// result = getActor(mostProlificActorId);
+	    	
+	    
+
 	    	
 	    	
         }
@@ -413,6 +508,7 @@ public class Neo4jKevinBacon {
             }
             result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
+
         }
 		
 		return result;

@@ -1,5 +1,7 @@
 package ca.yorku.eecs;
 
+import static org.neo4j.driver.v1.Values.parameters;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -10,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.json.JSONObject;
+import org.neo4j.driver.v1.Session;
+
 //import org.jcp.xml.dsig.internal.dom.Utils;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -179,18 +183,24 @@ public class RequestHandler implements HttpHandler{
     public void addStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException {
     	String name;
     	String streamingServiceId;
-    	
-    	// TODO: If streamingServiceId already exists in database, return 400
-    	
+
     	if (queryParam.containsKey("name") && queryParam.containsKey("streamingServiceId")) {
     		
     		name = queryParam.get("name");
     		streamingServiceId = queryParam.get("streamingServiceId");
     		
-    		neo4j.addStreamingService(name, streamingServiceId);
-            
-            String response = name + " added successfully.";
-            sendString(request, response, 200);
+    		String queryResult = neo4j.addStreamingService(name, streamingServiceId);
+    		
+    		System.out.println(queryResult);
+    		
+    		if (queryResult == "200") {
+    			String response = name + " added successfully.";
+                sendString(request, response, 200);
+    		}
+    		else if (queryResult == "400") {
+    			String response = name + " already exists in the database.";
+                sendString(request, response, 400);
+    		}
     	}
     	else {
     		String response = "The request body is improperly formatted or missing required information.";
@@ -210,10 +220,20 @@ public class RequestHandler implements HttpHandler{
     		movieId = queryParam.get("movieId");
     		streamingServiceId = queryParam.get("streamingServiceId");
     		
-    		neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
-            
-            String response = "STREAMING_ON relationship added successfully.";
-            sendString(request, response, 200);
+    		String queryResult = neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
+    		
+    		if (queryResult == "200") {
+    			String response = "STREAMING_ON relationship added successfully.";
+                sendString(request, response, 200);
+    		}
+    		else if (queryResult == "400") {
+    			String response = "STREAMING_ON relationship already exists in the database.";
+    			sendString(request, response, 400);
+    		}
+    		else if (queryResult == "404") {
+    			String response = "Either movieId or streamingServiceId does not exist in the database.";
+    			sendString(request, response, 404);
+    		}
     	}
     	else {
     		String response = "The request body is improperly formatted or missing required information.";
@@ -231,8 +251,16 @@ public class RequestHandler implements HttpHandler{
     		
     		streamingServiceId = queryParam.get("streamingServiceId");
             
-            String response = neo4j.getMoviesOnStreamingService(streamingServiceId);
-            sendString(request, response, 200);
+            String result = neo4j.getMoviesOnStreamingService(streamingServiceId);
+            
+            if (result == "404") {
+            	String response = "There exists no Streaming Service with streamingServiceId:" + streamingServiceId + " in the database.";
+            	sendString(request, response, 404);
+            }
+            else {
+            	String response = result;
+            	sendString(request, response, 200);
+            }
     	}
     	else {
     		String response = "The request body is improperly formatted or missing required information.";
