@@ -34,7 +34,7 @@ public class Neo4jKevinBacon {
 	// PUT REQUESTS
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, movieId: $y})", 
+			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, id: $y})", 
 					parameters("x", name, "y", movieId)));
 			session.close();
 		}
@@ -42,16 +42,16 @@ public class Neo4jKevinBacon {
 	
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, actorId: $actorId})", 
-					parameters("name", name,"actorId", actorId)));
+			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, id: $id})", 
+					parameters("name", name,"id", actorId)));
 			session.close();
 		}
 	}
 	
 	public void addRelationship(String actorId, String movieId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MATCH (a:Actor {actorId:$x}),"
-					+ "(m:Movie {movieId:$y})\n" + 
+			session.writeTransaction(tx -> tx.run("MATCH (a:Actor {id:$x}),"
+					+ "(m:Movie {id:$y})\n" + 
 					 "MERGE (a)-[r:ACTED_IN]->(m)\n" , parameters("x", actorId, "y", movieId)));
 			session.close();
 		}
