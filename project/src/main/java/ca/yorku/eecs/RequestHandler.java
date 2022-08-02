@@ -274,26 +274,90 @@ public class RequestHandler implements HttpHandler{
     
     public void getMovie(HttpExchange request, Map<String, String> queryParam) throws IOException{
     	
-    	String movieId = queryParam.get("movieId");
-    	
-    	String response = neo4j.getMovie(movieId);
-    	sendString(request, response, 200);
+    	String movieId;
+    	if(queryParam.containsKey("movieId")) {
+    		movieId = queryParam.get("movieId");
+    		String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
+    		if(moviePresent.equals(" true")) {
+    			String response = neo4j.getMovie(movieId);
+    			sendString(request, response, 200);
+    		}
+    		else {
+    			String response = "Given MovieId does not exist in the database";
+    			sendString(request, response, 404);
+    		}
+    	}
+    	else {
+    		String response = "Request body improperly formatted";
+        	sendString(request, response, 400);
+    	}
+    
     	
     }
     
     public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{
-    	String actorId = queryParam.get("actorId");
+    	String actorId;
+    	if(queryParam.containsKey("actorId")) {
+    		actorId = queryParam.get("actorId");
+    		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+    		System.out.println(actorPresent);
+        	if(actorPresent.equals(" true")) {
+        		String response = neo4j.getActor(actorId);
+            	sendString(request, response, 200);
+        	}
+        	else {
+        		String response = "Given ActorId does not exist in the database";
+        		sendString(request, response, 404);
+        	}
+        	
+    	}
+    	else {
+    		String response = "Request body improperly formatted";
+    		sendString(request, response, 400);
+    	}
     	
-    	String response = neo4j.getActor(actorId);
-    	sendString(request, response, 200);
+    	
     }
     
     public void hasRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException{
-    	String actorId = queryParam.get("actorId");
-    	String movieId = queryParam.get("movieId");
-    	String response = neo4j.hasRelationship(actorId,movieId);
-    	sendString(request, response, 200);
-    }
+    	String actorId;
+    	String movieId;
+//    	String response = neo4j.hasRelationship(actorId,movieId);
+    	
+    	String response;
+    	
+    	if(queryParam.containsKey("actorId") && queryParam.containsKey("movieId")) {
+        	actorId = queryParam.get("actorId");
+        	movieId = queryParam.get("movieId");
+//        	
+        	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+        	String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
+//        	
+        	if(actorPresent.equals(" true") && moviePresent.equals(" true")) {
+//        		
+        		response = neo4j.hasRelationship(actorId,movieId);
+        		sendString(request, response, 200);
+        	}
+        	else if(!moviePresent.equals(" true") && !actorPresent.equals(" true")) {
+        		response = "Given MovieId and ActorId not present";
+        		sendString(request, response, 404);
+        	}
+        	else if(!actorPresent.equals(" true")){
+        		response = "Given ActorId not present";
+        		sendString(request, response, 404);
+        	}
+        	else if(!moviePresent.equals(" true")) {
+        		response = "Given MovieId not present";
+        		sendString(request, response, 404);
+        	}
+        	
+    	}
+    	else {
+    		response = "Request body improperly formatted";
+    		sendString(request, response, 400);
+    	}
+		
+    	    }
     
     public void computeBaconNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
     

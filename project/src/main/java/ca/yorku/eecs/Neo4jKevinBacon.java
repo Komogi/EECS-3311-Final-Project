@@ -172,8 +172,8 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
-                		+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+                		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
                 		parameters("x",actorId, "y", movieId));
 
                 ans = node_boolean.single().toString();
@@ -183,7 +183,7 @@ public class Neo4jKevinBacon {
                int i = 0;  
                ans="";
                while(i < 5) {
-            	   ans+= a[2].charAt(i);
+            	   ans+= a[1].charAt(i);
             	   i++;
                }
         }
@@ -191,6 +191,57 @@ public class Neo4jKevinBacon {
 		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
 		 
 		return result;
+	}
+	
+	public String hasActor(String actorId) {
+//		boolean result = false;
+		String[] a = new String[10];
+		String ans = "";
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.actorId=$x"
+                		+ " RETURN a IS NOT NULL AS Predicate" , 
+                		parameters("x",actorId));
+
+                ans = node_boolean.single().toString();
+            }
+               
+               a = ans.split(":");
+               
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+        }
+		return ans;
+	}
+	
+	public String hasMovie(String movieId) {
+		String[] a = new String[10];
+		String ans = "";
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (m:Movie) WHERE m.movieId=$x"
+                		+ " RETURN m IS NOT NULL AS Predicate" , 
+                		parameters("x",movieId));
+
+                ans = node_boolean.single().toString();
+            }
+              
+               a = ans.split(":");
+               
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+        }
+		return ans;
 	}
 	
 	public JSONObject computerBaconNumber(String actorId) {
