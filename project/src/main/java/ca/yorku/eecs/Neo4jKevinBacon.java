@@ -317,9 +317,34 @@ public class Neo4jKevinBacon {
 		return ans;
 	}
 	
-	public JSONObject computerBaconNumber(String actorId) {
-		JSONObject j = new JSONObject();
-		return j;
+	public String computeBaconNumber(String actorId) {
+		
+		String result = "";
+        
+        try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {actorId:$x}), "
+            			+ "(end:Actor {actorId:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            			+ "RETURN p",
+                		parameters("x", actorId, "y", "a1234567"));
+            	
+            	String queryResult = statementResult.next().toString();
+            	
+            	System.out.println(queryResult);
+            	queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+            	
+            	result = String.format("{\n");
+                result += "\"baconNumber\": " + queryResult + "\n";
+                result += "}\n";
+            }
+            
+            session.close();
+        }
+        
+        return result;
+		
 	}
 	
 	public JSONObject computeBaconPath(String actorId) {
@@ -463,11 +488,6 @@ public class Neo4jKevinBacon {
 	    	
 
 	    	// result = getActor(mostProlificActorId);
-	    	
-	    
-
-	    	
-	    	
         }
 //		result = this.getActor("a123456");
 		System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);

@@ -391,11 +391,30 @@ public class RequestHandler implements HttpHandler{
     		sendString(request, response, 400);
     	}
 		
-    	    }
+    }
     
     public void computeBaconNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
-    
+    	String actorId;
+    	String response;
     	
+    	if(queryParam.containsKey("actorId")) {
+        	actorId = queryParam.get("actorId");
+//        	
+        	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+//        	
+        	if(!actorPresent.equals(" true")){
+        		response = "Given ActorId not present";
+        		sendString(request, response, 404);
+        	}
+        	else {
+        		response = neo4j.computeBaconNumber(actorId);
+        		sendString(request, response, 200);
+        	}
+    	}
+    	else {
+    		response = "Request body improperly formatted";
+    		sendString(request, response, 400);
+    	}
     }
     
     public void computeBaconPath(HttpExchange request, Map<String, String> queryParam) throws IOException{
