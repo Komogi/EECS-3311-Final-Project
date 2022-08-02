@@ -327,16 +327,16 @@ public class Neo4jKevinBacon {
             	
             	StatementResult statementResult = tx.run("MATCH (start:Actor {actorId:$x}), "
             			+ "(end:Actor {actorId:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
-            			+ "RETURN p",
-                		parameters("x", actorId, "y", "a1234567"));
+            			+ "RETURN length(p)",
+                		parameters("x", actorId, "y", "\"nm0000102\""));
             	
             	String queryResult = statementResult.next().toString();
             	
-            	System.out.println(queryResult);
+            	//System.out.println(queryResult);
             	queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
             	
             	result = String.format("{\n");
-                result += "\"baconNumber\": " + queryResult + "\n";
+                result += "\"baconNumber\": " + Integer.parseInt(queryResult)/2 + "\n";
                 result += "}\n";
             }
             
@@ -347,9 +347,79 @@ public class Neo4jKevinBacon {
 		
 	}
 	
-	public JSONObject computeBaconPath(String actorId) {
-		JSONObject j = new JSONObject();
-		return j;
+	public String computeBaconPath(String actorId) {
+		String result = "";
+		String[] unprocessed = new String[100];
+		ArrayList<String> processed = new ArrayList();
+        
+        try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {actorId:$x}), "
+            			+ "(end:Actor {actorId:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            			+ "RETURN p",
+                		parameters("x", actorId, "y", "\"nm0000102\""));
+            	
+            	ArrayList<String> records = new ArrayList<String>();
+            	
+            	while (statementResult.hasNext()) {         		
+            		records.add(statementResult.next().toString());
+            	}
+            	
+            	for(int i = 0; i < records.size(); i++) {
+                	
+            		System.out.println(records.get(i));
+            		
+                	unprocessed = records.get(i).split("-");
+                }
+            	
+            	processed.add(unprocessed[0].substring(unprocessed[0].length() - 2, unprocessed[0].length() - 1));
+            	
+            	int indexOffset = 1;
+            	
+            	for (int i = 2; i < unprocessed.length; i += 2) {
+            		processed.add(unprocessed[i].substring(1 + indexOffset, 2 + indexOffset));
+            		
+            		if (indexOffset == 1) {
+            			indexOffset--;
+            		}
+            		else {
+            			indexOffset++;
+            		}
+            	}
+            	
+            	records = new ArrayList<String>();
+            	
+            	for(int i = 0; i < processed.size(); i++) {
+                	
+            		statementResult = tx.run("MATCH (n) WHERE id(n)=$x RETURN n.id",
+                    		parameters("x", processed.get(i)));
+            		
+            		while (statementResult.hasNext()) {         		
+                		records.add(statementResult.next().toString());
+                	}
+                }
+            	
+            	for(int i = 0; i < records.size(); i++) {
+                	
+                	String tmp = records.get(i).split("\"")[2];
+                	tmp = tmp.substring(0, tmp.length()-1);
+                	records.set(i, tmp);
+                	
+                	System.out.println(records.get(i));
+                }
+            	
+            	
+            	result = String.format("{\n");
+                result += "\"baconNumber\": \n";
+                result += "}\n";
+            }
+            
+            session.close();
+        }
+        
+        return result;
 	}
 
 	public void addMovieStreamingServiceRelationship(String movieId, String streamingServiceId) {

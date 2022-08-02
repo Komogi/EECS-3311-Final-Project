@@ -401,10 +401,18 @@ public class RequestHandler implements HttpHandler{
         	actorId = queryParam.get("actorId");
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+        	
+        	// System.out.println(actorId);
 //        	
         	if(!actorPresent.equals(" true")){
         		response = "Given ActorId not present";
         		sendString(request, response, 404);
+        	}
+        	else if (actorId.equals("\"nm0000102\"")){
+        		response = String.format("{\n");
+                response += "\"baconNumber\": " + 0 + "\n";
+                response += "}\n";
+                sendString(request, response, 200);
         	}
         	else {
         		response = neo4j.computeBaconNumber(actorId);
@@ -418,7 +426,34 @@ public class RequestHandler implements HttpHandler{
     }
     
     public void computeBaconPath(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    	String actorId;
+    	String response;
     	
+    	if(queryParam.containsKey("actorId")) {
+        	actorId = queryParam.get("actorId");
+//        	
+        	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+        	
+        	// System.out.println(actorId);
+//        	
+        	if(!actorPresent.equals(" true")){
+        		response = "Given ActorId not present";
+        		sendString(request, response, 404);
+        	}
+        	else if (actorId.equals("\"nm0000102\"")){
+        		// TODO: format response
+        		response = "";
+                sendString(request, response, 200);
+        	}
+        	else {
+        		response = neo4j.computeBaconPath(actorId);
+        		sendString(request, response, 200);
+        	}
+    	}
+    	else {
+    		response = "Request body improperly formatted";
+    		sendString(request, response, 400);
+    	}
     }
     private static ArrayList<String> splitRawPath(String rawPath) throws UnsupportedEncodingException {
         
