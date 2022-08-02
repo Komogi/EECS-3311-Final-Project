@@ -243,27 +243,78 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
-                		+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+                		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
                 		parameters("x",actorId, "y", movieId));
 
                 ans = node_boolean.single().toString();
             }
             
-           a = ans.split(":");
-           int i = 0;  
-           ans="";
-           while(i < 5) {
-        	   ans+= a[2].charAt(i);
-        	   i++;
-           }
-               
-           session.close();
+
+               a = ans.split(":");
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+
         }
 		result = "{\n";
 		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
 		 
 		return result;
+	}
+	
+	public String hasActor(String actorId) {
+//		boolean result = false;
+		String[] a = new String[10];
+		String ans = "";
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.actorId=$x"
+                		+ " RETURN a IS NOT NULL AS Predicate" , 
+                		parameters("x",actorId));
+
+                ans = node_boolean.single().toString();
+            }
+               
+               a = ans.split(":");
+               
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+        }
+		return ans;
+	}
+	
+	public String hasMovie(String movieId) {
+		String[] a = new String[10];
+		String ans = "";
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (m:Movie) WHERE m.movieId=$x"
+                		+ " RETURN m IS NOT NULL AS Predicate" , 
+                		parameters("x",movieId));
+
+                ans = node_boolean.single().toString();
+            }
+              
+               a = ans.split(":");
+               
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+        }
+		return ans;
 	}
 	
 	public JSONObject computerBaconNumber(String actorId) {
@@ -372,6 +423,7 @@ public class Neo4jKevinBacon {
         	while (node_boolean.hasNext()) {
         		actors.add(node_boolean.next().toString());
         	}
+
         	
         	// Isolate actorIDs
 	    	for(int i = 0; i < actors.size(); i++) {        	
@@ -380,16 +432,24 @@ public class Neo4jKevinBacon {
 	         	actors.set(i, tmp);
 	        }
 	    	
+//	    	for(int i = 0; i < actors.size(); i++) {
+//        		System.out.println(actors.get(i));
+//        	}
 	    	// Add and Count all distinct Actors
 	    	for(int i = 0; i < actors.size(); i++) {
 	    		if(!actorsCount.containsKey(actors.get(i))) {
 	    			actorsCount.put(actors.get(i), 1);
 	    		}
 	    		else {
-	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i) + 1));
+	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
 	    		}
 	    	}
 	    	
+//	    	for(String x: actorsCount.keySet()) {
+//	    		String key = x;
+////	    	    int value = actorsCount.get(x);
+//	    	    System.out.println(key + " " );	
+//	    	}
 	    	Integer max = 0;
         	
 	    	// Get Actor with the highest Count
@@ -400,11 +460,55 @@ public class Neo4jKevinBacon {
 	    		}
 	    	}
 	    	
-	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
 	    	
-	    	result = getActor(mostProlificActorId);
+
+	    	// result = getActor(mostProlificActorId);
 	    	
-	    	session.close();
+	    
+
+	    	
+	    	
+        }
+//		result = this.getActor("a123456");
+		System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
+//		String result = "";
+		String tmp2 = "";
+        
+        ArrayList<String> tmp = new ArrayList<String>();
+        
+        try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult node_boolean2 = tx.run("MATCH(a:Actor) WHERE a.actorId=$x RETURN a.name"
+                        ,parameters("x", mostProlificActorId) );
+
+                StatementResult node_boolean3 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.actorId=$x RETURN m.movieId",parameters("x",mostProlificActorId));
+                
+                while(node_boolean.hasNext()) {
+                    tmp.add(node_boolean2.next().toString());
+                }
+                
+                while(node_boolean2.hasNext()) {
+                    tmp.add(node_boolean3.next().toString());
+                }
+            }
+           
+            for(int i = 0; i < tmp.size(); i++) {
+            	
+            	tmp2=tmp.get(i).split("\"")[2];
+            	tmp2= tmp2.substring(0,tmp2.length()-1);
+            	tmp.set(i, tmp2);
+            }
+
+            result = String.format("{\n \"actorId\": %s,\n", mostProlificActorId);
+            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+            result += "\"movies\": [\n";
+            for(int i = 1; i < tmp.size() - 1;i++) {
+            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            }
+            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
+            result+="    ]\n}";
+
         }
 		
 		return result;
