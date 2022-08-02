@@ -434,7 +434,7 @@ public class RequestHandler implements HttpHandler{
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
-        	// System.out.println(actorId);
+        	System.out.println(actorPresent);
 //        	
         	if(!actorPresent.equals(" true")){
         		response = "Given ActorId not present";

@@ -273,7 +273,7 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.actorId=$x"
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.id=$x"
                 		+ " RETURN a IS NOT NULL AS Predicate" , 
                 		parameters("x",actorId));
 
@@ -356,12 +356,13 @@ public class Neo4jKevinBacon {
         {
             try (Transaction tx = session.beginTransaction()) {
             	
-            	StatementResult statementResult = tx.run("MATCH (start:Actor {actorId:$x}), "
-            			+ "(end:Actor {actorId:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
+            			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
             			+ "RETURN p",
                 		parameters("x", actorId, "y", "\"nm0000102\""));
             	
             	ArrayList<String> records = new ArrayList<String>();
+            	//TODO the case when path does not exist (statementResult.hasNext() == false means that there is not paths)
             	
             	while (statementResult.hasNext()) {         		
             		records.add(statementResult.next().toString());
@@ -376,6 +377,7 @@ public class Neo4jKevinBacon {
             	
             	processed.add(unprocessed[0].substring(unprocessed[0].length() - 2, unprocessed[0].length() - 1));
             	
+            	
             	int indexOffset = 1;
             	
             	for (int i = 2; i < unprocessed.length; i += 2) {
@@ -388,14 +390,16 @@ public class Neo4jKevinBacon {
             			indexOffset++;
             		}
             	}
-            	
+            	for(int i =0; i < processed.size(); i++) {
+            		System.out.println(processed.get(i));
+            	}
             	records = new ArrayList<String>();
             	
             	for(int i = 0; i < processed.size(); i++) {
                 	
             		statementResult = tx.run("MATCH (n) WHERE id(n)=$x RETURN n.id",
-                    		parameters("x", processed.get(i)));
-            		
+                    		parameters("x", Integer.parseInt(processed.get(i))));
+//            		System.out.println(statementResult.hasNext());
             		while (statementResult.hasNext()) {         		
                 		records.add(statementResult.next().toString());
                 	}
@@ -412,7 +416,14 @@ public class Neo4jKevinBacon {
             	
             	
             	result = String.format("{\n");
-                result += "\"baconNumber\": \n";
+            	result += "\"baconPath\": [\n";
+            	for(int i = 0; i < records.size() - 1; i++) {
+            		result += String.format("%s,\n", records.get(i));
+            	
+            	}
+            	result += String.format("%s\n", records.get(records.size()-1));
+
+               
                 result += "}\n";
             }
             
