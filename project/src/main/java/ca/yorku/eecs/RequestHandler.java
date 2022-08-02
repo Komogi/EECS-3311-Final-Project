@@ -268,7 +268,8 @@ public class RequestHandler implements HttpHandler{
 		// TODO: If there are no actors in the database, return 404
     	// TODO: If there are actors in the database, but none have acted in movies, return 404
 		
-		String response = neo4j.getMostProlificActor();
+		String response= neo4j.getMostProlificActor();
+//		String response = neo4j.getActor(actorId);
         sendString(request, response, 200);
     }
     
@@ -294,6 +295,11 @@ public class RequestHandler implements HttpHandler{
     
     	
     }
+    
+//    public void getActor(HttpExchange request,String actorId) throws IOException{
+//    	String response = neo4j.getActor(actorId);
+//    	sendString(request, response, 200);
+//    }
     
     public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{
     	String actorId;
