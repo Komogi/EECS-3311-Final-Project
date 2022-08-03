@@ -34,8 +34,8 @@ public class Neo4jKevinBacon {
 	// PUT REQUESTS
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $x, id: $y})", 
-					parameters("x", name, "y", movieId)));
+			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $name, id: $id})", 
+					parameters("name", name, "id", movieId)));
 			session.close();
 		}
 	}
@@ -43,7 +43,7 @@ public class Neo4jKevinBacon {
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, id: $id})", 
-					parameters("name", name,"id", actorId)));
+					parameters("name", name, "id", actorId)));
 			session.close();
 		}
 	}
@@ -97,8 +97,8 @@ public class Neo4jKevinBacon {
 			try (Transaction tx = session.beginTransaction()) {
 				
 				StatementResult statementResult = tx.run("MATCH (m:Movie) "
-						+ "WHERE m.movieId=$movieId RETURN count(m)", 
-						parameters("movieId", movieId));
+						+ "WHERE m.id=$id RETURN count(m)", 
+						parameters("id", movieId));
 				
 				String queryResult = statementResult.next().toString();
 				
@@ -116,7 +116,7 @@ public class Neo4jKevinBacon {
 					result = "404";
 				}
 				else {
-					statementResult = tx.run("MATCH (m:Movie {movieId:$x})-[r:STREAMING_ON]->(s:StreamingService {streamingServiceId:$y})\n" + 
+					statementResult = tx.run("MATCH (m:Movie {id:$x})-[r:STREAMING_ON]->(s:StreamingService {streamingServiceId:$y})\n" + 
 							 "RETURN count(r)\n" , parameters("x", movieId, "y", streamingServiceId));
 					
 					queryResult = statementResult.next().toString();
@@ -129,7 +129,7 @@ public class Neo4jKevinBacon {
 						result = "400";
 					}
 					else {
-						tx.run("MATCH (m:Movie {movieId:$x}), (s:StreamingService {streamingServiceId:$y})\n" + 
+						tx.run("MATCH (m:Movie {id:$x}), (s:StreamingService {streamingServiceId:$y})\n" + 
 								 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId));
 					}
 				}
@@ -152,10 +152,10 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.movieId=$x RETURN m.name"
-                        ,parameters("x", movieId) );
+                StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.id=$id RETURN m.name"
+                        ,parameters("id", movieId) );
 
-                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.movieId=$x RETURN a.actorId",parameters("x",movieId));
+                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.id=$id RETURN a.id",parameters("id",movieId));
                 
                 while(node_boolean.hasNext()) {
                     
@@ -196,10 +196,10 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.actorId=$x RETURN a.name"
-                        ,parameters("x", actorId) );
+                StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.id=$id RETURN a.name"
+                        ,parameters("id", actorId) );
 
-                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.actorId=$x RETURN m.movieId",parameters("x",actorId));
+                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$x RETURN m.id",parameters("id",actorId));
                 
                 while(node_boolean.hasNext()) {
                     tmp.add(node_boolean.next().toString());
@@ -243,7 +243,7 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.id=$x AND  m.id=$y "
                 		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
                 		parameters("x",actorId, "y", movieId));
 
@@ -298,7 +298,7 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("OPTIONAL MATCH (m:Movie) WHERE m.movieId=$x"
+                StatementResult node_boolean = tx.run("OPTIONAL MATCH (m:Movie) WHERE m.id=$x"
                 		+ " RETURN m IS NOT NULL AS Predicate" , 
                 		parameters("x",movieId));
 
@@ -325,8 +325,8 @@ public class Neo4jKevinBacon {
         {
             try (Transaction tx = session.beginTransaction()) {
             	
-            	StatementResult statementResult = tx.run("MATCH (start:Actor {actorId:$x}), "
-            			+ "(end:Actor {actorId:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
+            			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
             			+ "RETURN length(p)",
                 		parameters("x", actorId, "y", "\"nm0000102\""));
             	
@@ -435,7 +435,7 @@ public class Neo4jKevinBacon {
 
 	public void addMovieStreamingServiceRelationship(String movieId, String streamingServiceId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {movieId:$x}),"
+			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {id:$x}),"
 					+ "(s:StreamingService {streamingServiceId:$y})\n" + 
 					 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId)));
 			session.close();
@@ -463,7 +463,7 @@ public class Neo4jKevinBacon {
             		result = "404";
             	}
             	else {
-            		StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.movieId",
+            		StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.id",
                     		parameters("x", streamingServiceId));
 
                     while(moviesOnStreamingServiceResult.hasNext()) {
@@ -523,7 +523,7 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
         	try (Transaction tx = session.beginTransaction()) {
-        		node_boolean = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.actorId");
+        		node_boolean = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
         	}
         	
         	while (node_boolean.hasNext()) {
@@ -580,10 +580,10 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean2 = tx.run("MATCH(a:Actor) WHERE a.actorId=$x RETURN a.name"
+                StatementResult node_boolean2 = tx.run("MATCH(a:Actor) WHERE a.id=$x RETURN a.name"
                         ,parameters("x", mostProlificActorId) );
 
-                StatementResult node_boolean3 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.actorId=$x RETURN m.movieId",parameters("x",mostProlificActorId));
+                StatementResult node_boolean3 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$x RETURN m.id",parameters("x",mostProlificActorId));
                 
                 while(node_boolean.hasNext()) {
                     tmp.add(node_boolean2.next().toString());
