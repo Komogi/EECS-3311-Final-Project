@@ -348,9 +348,10 @@ public class Neo4jKevinBacon {
 	}
 	
 	public String computeBaconPath(String actorId) {
+		
 		String result = "";
 		String[] unprocessed = new String[100];
-		ArrayList<String> processed = new ArrayList();
+		ArrayList<String> processed = new ArrayList<String>();
         
         try (Session session = driver.session())
         {
@@ -514,20 +515,57 @@ public class Neo4jKevinBacon {
 	}
 	
 	// TOOD: Calculate Actor Number and Return It
-	public StatementResult getActorNumber(String actor1Id, String actor2Id) {
-		StatementResult node_boolean;
+	public String getActorNumber(String firstActorId, String secondActorId) {
+		
+		String result = "";
+        
+        try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
+            			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            			+ "RETURN length(p)",
+                		parameters("x", firstActorId, "y", secondActorId));
+            	
+            	String queryResult = statementResult.next().toString();
+            	
+            	//System.out.println(queryResult);
+            	queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
+            	
+            	result = String.format("{\n");
+                result += "\"actorNumber\": " + Integer.parseInt(queryResult)/2 + "\n";
+                result += "}\n";
+            }
+            
+            session.close();
+        }
+        
+        return result;
+	}
+	
+	public boolean hasPathFromActorToActor(String firstActorId, String secondActorId) {
+		
+		boolean result = true;
 		
 		try (Session session = driver.session())
         {
-        	try (Transaction tx = session.beginTransaction()) {
-        		node_boolean = tx.run("RETURN EXISTS( (:Movie)"
-        				+ "-[:STREAMING_ON]-(:StreamingService {streamingServiceId: $x}) ) as bool");
-        	}
-        	
-        	session.close();
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
+            			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            			+ "RETURN p",
+                		parameters("x", firstActorId, "y", secondActorId));
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
+            }
+            
+            session.close();
         }
 		
-		return node_boolean;
+		return result;
 	}
 	
 	// TODO: Calculate Most Prolific Actor and Return It

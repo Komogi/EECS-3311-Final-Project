@@ -273,17 +273,43 @@ public class RequestHandler implements HttpHandler{
     	String firstActorId;
     	String secondActorId;
     	
-    	// TODO: If either firstActorId or secondActorId does not exist in the database, return 404
-    	
     	if (queryParam.containsKey("firstActorId") && queryParam.containsKey("secondActorId")) {
     		
     		firstActorId = queryParam.get("firstActorId");
     		secondActorId = queryParam.get("secondActorId");
     		
-    		neo4j.getActorNumber(firstActorId, secondActorId); // TODO: assign to response
-            
-            String response = "???";
-            sendString(request, response, 200);
+    		String firstActorPresent = neo4j.hasActor(firstActorId).toLowerCase();
+    		String secondActorPresent = neo4j.hasActor(secondActorId).toLowerCase();
+    		
+        	if(firstActorPresent.equals(" true") && secondActorPresent.equals(" true")) {
+        		
+        		if (firstActorId.equals(secondActorId)) {
+        			String response = String.format("{\n");
+                    response += "\"actorNumber\": " + 0 + "\n";
+                    response += "}\n";
+                    sendString(request, response, 200);
+        		}
+        		else if (neo4j.hasPathFromActorToActor(firstActorId, secondActorId)) {
+        			String response = neo4j.getActorNumber(firstActorId, secondActorId);
+                	sendString(request, response, 200);
+        		}
+        		else {
+        			String response = "There does not exist a path between " + firstActorId + " and " + secondActorId + ".";
+                	sendString(request, response, 404);
+        		}
+        	}
+        	else if (!firstActorPresent.equals(" true") && !secondActorPresent.equals(" true")){
+        		String response = "Given firstActorId and secondActorId do not exist in the database";
+        		sendString(request, response, 404);
+        	}
+        	else if (!firstActorPresent.equals(" true")){
+        		String response = "Given firstActorId does not exist in the database";
+        		sendString(request, response, 404);
+        	}
+        	else if (!secondActorPresent.equals(" true")){
+        		String response = "Given secondActorId does not exist in the database";
+        		sendString(request, response, 404);
+        	}        	
     	}
     	else {
     		String response = "The request body is improperly formatted or missing required information.";
@@ -414,6 +440,10 @@ public class RequestHandler implements HttpHandler{
                 response += "}\n";
                 sendString(request, response, 200);
         	}
+        	else if (!neo4j.hasPathToKevinBacon(actorId)) {
+        		response = "There is no path from " + actorId + " to Kevin Bacon.";
+        		sendString(request, response, 404);
+        	}
         	else {
         		response = neo4j.computeBaconNumber(actorId);
         		sendString(request, response, 200);
@@ -434,14 +464,13 @@ public class RequestHandler implements HttpHandler{
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
-        	System.out.println(actorPresent);
+        	// System.out.println(actorPresent);
 //        	
         	if(!actorPresent.equals(" true")){
         		response = "Given ActorId not present";
         		sendString(request, response, 404);
         	}
         	else if (actorId.equals("\"nm0000102\"")){
-        		// TODO: format response
         		response = String.format("{\n");
             	response += "\"baconPath\": [\n";
             	response += String.format("%s,\n", "nm0000102");
@@ -462,6 +491,7 @@ public class RequestHandler implements HttpHandler{
     		sendString(request, response, 400);
     	}
     }
+    
     private static ArrayList<String> splitRawPath(String rawPath) throws UnsupportedEncodingException {
         
     	ArrayList<String> result = new ArrayList<String>();
