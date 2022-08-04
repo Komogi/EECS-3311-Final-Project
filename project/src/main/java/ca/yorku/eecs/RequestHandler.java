@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.neo4j.driver.v1.Session;
 
@@ -22,9 +23,11 @@ public class RequestHandler implements HttpHandler{
 
     private Neo4jKevinBacon neo4j;
     private String handleMethod;
+    private Utils utils;
     
     public RequestHandler(Neo4jKevinBacon neo4j) {
         this.neo4j = neo4j;
+        this.utils = new Utils();
     }
     
     @Override
@@ -33,6 +36,85 @@ public class RequestHandler implements HttpHandler{
     	
     	URI uri = request.getRequestURI();
     	String rawPath = uri.getRawPath();
+    	String body = Utils.convert(request.getRequestBody());
+    	
+    	System.out.println(body);
+    	
+    	try {
+    		JSONObject jsonBody = new JSONObject(body);
+    		ArrayList<String> splitRawPath = splitRawPath(rawPath);
+    		handleMethod = splitRawPath.get(splitRawPath.size() - 1);
+    		
+    		if(request.getRequestMethod().equals("PUT")) {
+           	 
+                switch(handleMethod) {
+	                 case "addMovie":
+	                	 addMovie(request, jsonBody);
+	                	 break;
+	                	 
+	                 case "addActor":
+	                	 addActor(request, jsonBody);
+	                	 break;
+	                	 
+	                 case "addRelationship":
+	                	 addRelationship(request, jsonBody);
+	                	 break;
+	                	 
+	                 case "addStreamingService":
+	                	 addStreamingService(request, jsonBody);
+	                	 break;
+	                	 
+	                 case "addStreamingOnRelationship":
+	                	 addStreamingOnRelationship(request, jsonBody);
+	                	 break;
+                }
+            }
+            else if (request.getRequestMethod().equals("GET")) {
+           	 // TODO
+           	 switch(handleMethod) {
+					case "getMovie":
+						getMovie(request, jsonBody);
+						break;
+						
+					case "getActor":
+						getActor(request, jsonBody);
+						break;
+						
+					case "hasRelationship":
+						hasRelationship(request, jsonBody);
+						break;
+						
+					case "computeBaconNumber":
+						computeBaconNumber(request, jsonBody);
+						break;
+						
+					case "computeBaconPath":
+						computeBaconPath(request, jsonBody);
+						break;
+
+	           	 	 case "getMoviesOnStreamingService":
+	           	 		 getMoviesOnStreamingService(request, jsonBody);
+	           	 		 break;
+           	 
+	                 case "getActorNumber":
+	                	 getActorNumber(request, jsonBody);
+	                	 break;
+	                	 
+	                 case "getMostProlificActor":
+	                	 getMostProlificActor(request);
+	                	 break;
+		             }
+	            } 
+	            else {
+	           	 sendString(request, "Request not found\n", 404);
+	            }
+	       } catch (Exception e) {
+	       	e.printStackTrace();
+	       	sendString(request, "Server error\n", 500);
+	       }
+		}
+    	
+    	/*
         String query = uri.getQuery();
         
         ArrayList<String> splitRawPath = splitRawPath(rawPath);
@@ -112,17 +194,17 @@ public class RequestHandler implements HttpHandler{
         	e.printStackTrace();
         	sendString(request, "Server error\n", 500);
         }
-    }
+        */
 
-    public void addMovie(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void addMovie(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
         
         String name;
         String movieId;
         
-        if (queryParam.containsKey("name") && queryParam.containsKey("movieId")) {
+        if (jsonBody.has("name") && jsonBody.has("movieId")) {
             
-            name =  queryParam.get("name");
-            movieId = queryParam.get("movieId");
+            name =  jsonBody.getString("name");
+            movieId = jsonBody.getString("movieId");
             
             neo4j.addMovie(name, movieId);
             
@@ -136,15 +218,15 @@ public class RequestHandler implements HttpHandler{
 
     }
     
-    public void addActor(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void addActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String name;
         String actorId;
         
         // add code for incorrect parameters
-        if (queryParam.containsKey("name") && queryParam.containsKey("actorId")) {
+        if (jsonBody.has("name") && jsonBody.has("actorId")) {
             
-            name =  queryParam.get("name");
-            actorId = queryParam.get("actorId");
+            name =  jsonBody.getString("name");
+            actorId = jsonBody.getString("actorId");
             
             neo4j.addActor(name, actorId);
             
@@ -157,17 +239,17 @@ public class RequestHandler implements HttpHandler{
         }
     }
     
-    public void addRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void addRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String actorId;
     	String movieId;
     	
     	// TODO: If either actorId or movieId does not exist in the database, return 404
     	// TODO: If relationship already exists, return 400
     	
-    	if (queryParam.containsKey("actorId") && queryParam.containsKey("movieId")) {
+    	if (jsonBody.has("actorId") && jsonBody.has("movieId")) {
     		
-    		actorId = queryParam.get("actorId");
-    		movieId = queryParam.get("movieId");
+    		actorId = jsonBody.getString("actorId");
+    		movieId = jsonBody.getString("movieId");
     		
     		neo4j.addRelationship(actorId, movieId);
             
@@ -180,14 +262,14 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void addStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void addStreamingService(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String name;
     	String streamingServiceId;
 
-    	if (queryParam.containsKey("name") && queryParam.containsKey("streamingServiceId")) {
+    	if (jsonBody.has("name") && jsonBody.has("streamingServiceId")) {
     		
-    		name = queryParam.get("name");
-    		streamingServiceId = queryParam.get("streamingServiceId");
+    		name = jsonBody.getString("name");
+    		streamingServiceId = jsonBody.getString("streamingServiceId");
     		
     		String queryResult = neo4j.addStreamingService(name, streamingServiceId);
     		
@@ -208,17 +290,17 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void addStreamingOnRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void addStreamingOnRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String movieId;
     	String streamingServiceId;
     	
     	// TODO: If either movieId or streamingServiceId does not exist in the database, return 404
     	// TODO: If relationship already exists, return 400
     	
-    	if (queryParam.containsKey("movieId") && queryParam.containsKey("streamingServiceId")) {
+    	if (jsonBody.has("movieId") && jsonBody.has("streamingServiceId")) {
     		
-    		movieId = queryParam.get("movieId");
-    		streamingServiceId = queryParam.get("streamingServiceId");
+    		movieId = jsonBody.getString("movieId");
+    		streamingServiceId = jsonBody.getString("streamingServiceId");
     		
     		String queryResult = neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
     		
@@ -241,15 +323,15 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-   public void getMoviesOnStreamingService(HttpExchange request, Map<String, String> queryParam) throws IOException {
+   public void getMoviesOnStreamingService(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     
     	String streamingServiceId;
     	
     	// TODO: If streamingServiceId does not exist in the datbaase, return 404
     	
-    	if (queryParam.containsKey("streamingServiceId")) {
+    	if (jsonBody.has("streamingServiceId")) {
     		
-    		streamingServiceId = queryParam.get("streamingServiceId");
+    		streamingServiceId = jsonBody.getString("streamingServiceId");
             
             String result = neo4j.getMoviesOnStreamingService(streamingServiceId);
             
@@ -268,15 +350,15 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void getActorNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void getActorNumber(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	
     	String firstActorId;
     	String secondActorId;
     	
-    	if (queryParam.containsKey("firstActorId") && queryParam.containsKey("secondActorId")) {
+    	if (jsonBody.has("firstActorId") && jsonBody.has("secondActorId")) {
     		
-    		firstActorId = queryParam.get("firstActorId");
-    		secondActorId = queryParam.get("secondActorId");
+    		firstActorId = jsonBody.getString("firstActorId");
+    		secondActorId = jsonBody.getString("secondActorId");
     		
     		String firstActorPresent = neo4j.hasActor(firstActorId).toLowerCase();
     		String secondActorPresent = neo4j.hasActor(secondActorId).toLowerCase();
@@ -333,11 +415,11 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void getMovie(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    public void getMovie(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	
     	String movieId;
-    	if(queryParam.containsKey("movieId")) {
-    		movieId = queryParam.get("movieId");
+    	if(jsonBody.has("movieId")) {
+    		movieId = jsonBody.getString("movieId");
     		String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
     		if(moviePresent.equals(" true")) {
     			String response = neo4j.getMovie(movieId);
@@ -361,10 +443,10 @@ public class RequestHandler implements HttpHandler{
 //    	sendString(request, response, 200);
 //    }
     
-    public void getActor(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    public void getActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
-    	if(queryParam.containsKey("actorId")) {
-    		actorId = queryParam.get("actorId");
+    	if(jsonBody.has("actorId")) {
+    		actorId = jsonBody.getString("actorId");
     		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
     		// System.out.println(actorPresent);
         	if(actorPresent.equals(" true")) {
@@ -385,16 +467,16 @@ public class RequestHandler implements HttpHandler{
     	
     }
     
-    public void hasRelationship(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    public void hasRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
     	String movieId;
 //    	String response = neo4j.hasRelationship(actorId,movieId);
     	
     	String response;
     	
-    	if(queryParam.containsKey("actorId") && queryParam.containsKey("movieId")) {
-        	actorId = queryParam.get("actorId");
-        	movieId = queryParam.get("movieId");
+    	if(jsonBody.has("actorId") && jsonBody.has("movieId")) {
+        	actorId = jsonBody.getString("actorId");
+        	movieId = jsonBody.getString("movieId");
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
@@ -425,12 +507,12 @@ public class RequestHandler implements HttpHandler{
 		
     }
     
-    public void computeBaconNumber(HttpExchange request, Map<String, String> queryParam) throws IOException {
+    public void computeBaconNumber(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String actorId;
     	String response;
     	
-    	if(queryParam.containsKey("actorId")) {
-        	actorId = queryParam.get("actorId");
+    	if(jsonBody.has("actorId")) {
+        	actorId = jsonBody.getString("actorId");
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
@@ -461,12 +543,12 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
-    public void computeBaconPath(HttpExchange request, Map<String, String> queryParam) throws IOException{
+    public void computeBaconPath(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
     	String response;
     	
-    	if(queryParam.containsKey("actorId")) {
-        	actorId = queryParam.get("actorId");
+    	if(jsonBody.has("actorId")) {
+        	actorId = jsonBody.getString("actorId");
 //        	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
