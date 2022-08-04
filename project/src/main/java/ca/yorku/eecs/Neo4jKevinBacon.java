@@ -573,7 +573,7 @@ public class Neo4jKevinBacon {
 		
 		String result = "";
 		String mostProlificActorId = "";
-		StatementResult node_boolean;
+		StatementResult statementResult;
 		
 		ArrayList<String> actors = new ArrayList<String>();
 		HashMap<String, Integer> actorsCount = new HashMap<String, Integer>();
@@ -581,93 +581,90 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session())
         {
         	try (Transaction tx = session.beginTransaction()) {
-        		node_boolean = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
+        		statementResult = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
+        		
+        		while (statementResult.hasNext()) {
+            		actors.add(statementResult.next().toString());
+            	}
+            	
+            	// Isolate actorIDs
+    	    	for(int i = 0; i < actors.size(); i++) {        	
+    	         	String tmp = actors.get(i).split("\"")[2];
+    	         	tmp = tmp.substring(0, tmp.length() - 1);
+    	         	actors.set(i, tmp);
+    	        }
+    	    	
+    	    	// Add and Count all distinct Actors
+    	    	for(int i = 0; i < actors.size(); i++) {
+    	    		if(!actorsCount.containsKey(actors.get(i))) {
+    	    			actorsCount.put(actors.get(i), 1);
+    	    		}
+    	    		else {
+    	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
+    	    		}
+    	    	}
+    	    	
+    	    	Integer max = 0;
+            	
+    	    	// Get Actor with the highest Count
+    	    	for (String actorId: actorsCount.keySet()) {
+    	    		if (actorsCount.get(actorId) > max) {
+    	    			max = actorsCount.get(actorId);
+    	    			mostProlificActorId = actorId;
+    	    		}
+    	    	}
+    	    	
+    	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
+    	    	
+    	    	statementResult = tx.run("MATCH (a:Actor) WHERE a.id=$id RETURN a.name",
+                        parameters("id", mostProlificActorId));
+    	    	
+    	    	System.out.println(statementResult.hasNext());
         	}
         	
-        	while (node_boolean.hasNext()) {
-        		actors.add(node_boolean.next().toString());
-        	}
-
-        	
-        	// Isolate actorIDs
-	    	for(int i = 0; i < actors.size(); i++) {        	
-	         	String tmp = actors.get(i).split("\"")[2];
-	         	tmp = tmp.substring(0, tmp.length() - 1);
-	         	actors.set(i, tmp);
-	        }
-	    	
-//	    	for(int i = 0; i < actors.size(); i++) {
-//        		System.out.println(actors.get(i));
-//        	}
-	    	// Add and Count all distinct Actors
-	    	for(int i = 0; i < actors.size(); i++) {
-	    		if(!actorsCount.containsKey(actors.get(i))) {
-	    			actorsCount.put(actors.get(i), 1);
-	    		}
-	    		else {
-	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
-	    		}
-	    	}
-	    	
-//	    	for(String x: actorsCount.keySet()) {
-//	    		String key = x;
-////	    	    int value = actorsCount.get(x);
-//	    	    System.out.println(key + " " );	
-//	    	}
-	    	Integer max = 0;
-        	
-	    	// Get Actor with the highest Count
-	    	for (String actorId: actorsCount.keySet()) {
-	    		if (actorsCount.get(actorId) > max) {
-	    			max = actorsCount.get(actorId);
-	    			mostProlificActorId = actorId;
-	    		}
-	    	}
-	    	
-	    	
-
-	    	// result = getActor(mostProlificActorId);
+        	session.close();
         }
-//		result = this.getActor("a123456");
-		System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
-//		String result = "";
-		String tmp2 = "";
-        
-        ArrayList<String> tmp = new ArrayList<String>();
-        
-        try (Session session = driver.session())
+		
+		return result;
+	}
+	
+	public boolean hasActors() {
+		boolean result = true;
+		
+		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean2 = tx.run("MATCH(a:Actor) WHERE a.id=$x RETURN a.name"
-                        ,parameters("x", mostProlificActorId) );
-
-                StatementResult node_boolean3 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$x RETURN m.id",parameters("x",mostProlificActorId));
-                
-                while(node_boolean.hasNext()) {
-                    tmp.add(node_boolean2.next().toString());
-                }
-                
-                while(node_boolean2.hasNext()) {
-                    tmp.add(node_boolean3.next().toString());
-                }
-            }
-           
-            for(int i = 0; i < tmp.size(); i++) {
             	
-            	tmp2=tmp.get(i).split("\"")[2];
-            	tmp2= tmp2.substring(0,tmp2.length()-1);
-            	tmp.set(i, tmp2);
+            	StatementResult statementResult = tx.run("MATCH (a:Actor) "
+            			+ "RETURN a LIMIT 1");
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
             }
-
-            result = String.format("{\n \"actorId\": %s,\n", mostProlificActorId);
-            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
-            result += "\"movies\": [\n";
-            for(int i = 1; i < tmp.size() - 1;i++) {
-            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            
+            session.close();
+        }
+		
+		return result;
+	}
+	
+	public boolean hasActedInRelationships() {
+		boolean result = true;
+		
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (a)-[r:ACTED_IN]->(m) "
+            			+ "RETURN type(r) LIMIT 1");
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
             }
-            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
-            result+="    ]\n}";
-
+            
+            session.close();
         }
 		
 		return result;

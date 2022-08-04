@@ -318,13 +318,19 @@ public class RequestHandler implements HttpHandler{
     }
     
     public void getMostProlificActor(HttpExchange request) throws IOException {
-	
-		// TODO: If there are no actors in the database, return 404
-    	// TODO: If there are actors in the database, but none have acted in movies, return 404
-		
-		String response= neo4j.getMostProlificActor();
-//		String response = neo4j.getActor(actorId);
-        sendString(request, response, 200);
+	   	
+    	if (!neo4j.hasActors()) {
+    		String response= "There are no Actors in the database.";
+            sendString(request, response, 404);
+    	}
+    	else if (!neo4j.hasActedInRelationships()) {
+    		String response= "There are no Actors that have acted in Movies, in the database.";
+            sendString(request, response, 404);
+    	}
+    	else {
+    		String response = neo4j.getMostProlificActor();
+            sendString(request, response, 200);
+    	}
     }
     
     public void getMovie(HttpExchange request, Map<String, String> queryParam) throws IOException{
