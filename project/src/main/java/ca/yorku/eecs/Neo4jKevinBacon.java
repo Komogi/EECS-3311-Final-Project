@@ -646,10 +646,11 @@ public class Neo4jKevinBacon {
             	String actor = r[2];
             	actor = r[2].substring(0,actor.length()-1);
             	actor = "\"" + actor + "\"";
+
             
-            	result = this.getActor(actor);
-            	 
             
+            	result = this.getActor(actor);            
+
             }
             
             session.close();
