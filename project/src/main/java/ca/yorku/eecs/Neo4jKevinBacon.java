@@ -199,7 +199,7 @@ public class Neo4jKevinBacon {
                 StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.id=$id RETURN a.name"
                         ,parameters("id", actorId) );
 
-                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$x RETURN m.id",parameters("id",actorId));
+                StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$id RETURN m.id",parameters("id",actorId));
                 
                 while(node_boolean.hasNext()) {
                     tmp.add(node_boolean.next().toString());
@@ -362,7 +362,6 @@ public class Neo4jKevinBacon {
                 		parameters("x", actorId, "y", "\"nm0000102\""));
             	
             	ArrayList<String> records = new ArrayList<String>();
-            	//TODO the case when path does not exist (statementResult.hasNext() == false means that there is not paths)
             	
             	while (statementResult.hasNext()) {         		
             		records.add(statementResult.next().toString());
@@ -370,7 +369,7 @@ public class Neo4jKevinBacon {
             	
             	for(int i = 0; i < records.size(); i++) {
                 	
-            		System.out.println(records.get(i));
+            		//System.out.println(records.get(i));
             		
                 	unprocessed = records.get(i).split("-");
                 }
@@ -390,9 +389,9 @@ public class Neo4jKevinBacon {
             			indexOffset++;
             		}
             	}
-            	for(int i =0; i < processed.size(); i++) {
+            	/*for(int i =0; i < processed.size(); i++) {
             		System.out.println(processed.get(i));
-            	}
+            	}*/
             	records = new ArrayList<String>();
             	
             	for(int i = 0; i < processed.size(); i++) {
@@ -411,26 +410,47 @@ public class Neo4jKevinBacon {
                 	tmp = tmp.substring(0, tmp.length()-1);
                 	records.set(i, tmp);
                 	
-                	System.out.println(records.get(i));
+                	// System.out.println(records.get(i));
                 }
             	
-            	
             	result = String.format("{\n");
-            	result += "\"baconPath\": [\n";
+            	result += "\t\"baconPath\": [\n";
             	for(int i = 0; i < records.size() - 1; i++) {
-            		result += String.format("%s,\n", records.get(i));
+            		result += String.format("\t\t\"%s\",\n", records.get(i));
             	
             	}
-            	result += String.format("%s\n", records.get(records.size()-1));
-
-               
-                result += "}\n";
+            	result += String.format("\t\t\"%s\"\n", records.get(records.size()-1));
+                result += "\t]\n}\n";
             }
             
             session.close();
         }
         
         return result;
+	}
+	
+	public boolean hasPathToKevinBacon(String actorId) {
+		
+		boolean result = true;
+		
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
+            			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
+            			+ "RETURN p",
+                		parameters("x", actorId, "y", "\"nm0000102\""));
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
+            }
+            
+            session.close();
+        }
+		
+		return result;
 	}
 
 	public void addMovieStreamingServiceRelationship(String movieId, String streamingServiceId) {

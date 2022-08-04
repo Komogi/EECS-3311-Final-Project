@@ -334,7 +334,7 @@ public class RequestHandler implements HttpHandler{
     	if(queryParam.containsKey("actorId")) {
     		actorId = queryParam.get("actorId");
     		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
-    		System.out.println(actorPresent);
+    		// System.out.println(actorPresent);
         	if(actorPresent.equals(" true")) {
         		String response = neo4j.getActor(actorId);
             	sendString(request, response, 200);
@@ -442,8 +442,15 @@ public class RequestHandler implements HttpHandler{
         	}
         	else if (actorId.equals("\"nm0000102\"")){
         		// TODO: format response
-        		response = "";
+        		response = String.format("{\n");
+            	response += "\"baconPath\": [\n";
+            	response += String.format("%s,\n", "nm0000102");
+                response += "]\n\n";
                 sendString(request, response, 200);
+        	}
+        	else if (!neo4j.hasPathToKevinBacon(actorId)) {
+        		response = "There is no path from " + actorId + " to Kevin Bacon.";
+        		sendString(request, response, 404);
         	}
         	else {
         		response = neo4j.computeBaconPath(actorId);
