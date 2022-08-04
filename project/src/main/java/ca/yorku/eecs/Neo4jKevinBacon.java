@@ -569,60 +569,90 @@ public class Neo4jKevinBacon {
 	}
 	
 	// TODO: Calculate Most Prolific Actor and Return It
+//	public String getMostProlificActor() {
+//		
+//		String result = "";
+//		String mostProlificActorId = "";
+//		StatementResult statementResult;
+//		
+//		ArrayList<String> actors = new ArrayList<String>();
+//		HashMap<String, Integer> actorsCount = new HashMap<String, Integer>();
+//		
+//		try (Session session = driver.session())
+//        {
+//        	try (Transaction tx = session.beginTransaction()) {
+//        		statementResult = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
+//        		
+//        		while (statementResult.hasNext()) {
+//            		actors.add(statementResult.next().toString());
+//            	}
+//            	
+//            	// Isolate actorIDs
+//    	    	for(int i = 0; i < actors.size(); i++) {        	
+//    	         	String tmp = actors.get(i).split("\"")[2];
+//    	         	tmp = tmp.substring(0, tmp.length() - 1);
+//    	         	actors.set(i, tmp);
+//    	        }
+//    	    	
+//    	    	// Add and Count all distinct Actors
+//    	    	for(int i = 0; i < actors.size(); i++) {
+//    	    		if(!actorsCount.containsKey(actors.get(i))) {
+//    	    			actorsCount.put(actors.get(i), 1);
+//    	    		}
+//    	    		else {
+//    	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
+//    	    		}
+//    	    	}
+//    	    	
+//    	    	Integer max = 0;
+//            	
+//    	    	// Get Actor with the highest Count
+//    	    	for (String actorId: actorsCount.keySet()) {
+//    	    		if (actorsCount.get(actorId) > max) {
+//    	    			max = actorsCount.get(actorId);
+//    	    			mostProlificActorId = actorId;
+//    	    		}
+//    	    	}
+//    	    	
+//    	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
+//    	    	
+//    	    	statementResult = tx.run("MATCH (a:Actor) WHERE a.id=$id RETURN a.name",
+//                        parameters("id", mostProlificActorId));
+//    	    	
+//    	    	System.out.println(statementResult.hasNext());
+//        	}
+//        	
+//        	session.close();
+//        }
+//		
+//		return result;
+//	}
+	
 	public String getMostProlificActor() {
-		
 		String result = "";
-		String mostProlificActorId = "";
-		StatementResult statementResult;
-		
-		ArrayList<String> actors = new ArrayList<String>();
-		HashMap<String, Integer> actorsCount = new HashMap<String, Integer>();
 		
 		try (Session session = driver.session())
         {
-        	try (Transaction tx = session.beginTransaction()) {
-        		statementResult = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
-        		
-        		while (statementResult.hasNext()) {
-            		actors.add(statementResult.next().toString());
-            	}
+            try (Transaction tx = session.beginTransaction()) {
             	
-            	// Isolate actorIDs
-    	    	for(int i = 0; i < actors.size(); i++) {        	
-    	         	String tmp = actors.get(i).split("\"")[2];
-    	         	tmp = tmp.substring(0, tmp.length() - 1);
-    	         	actors.set(i, tmp);
-    	        }
-    	    	
-    	    	// Add and Count all distinct Actors
-    	    	for(int i = 0; i < actors.size(); i++) {
-    	    		if(!actorsCount.containsKey(actors.get(i))) {
-    	    			actorsCount.put(actors.get(i), 1);
-    	    		}
-    	    		else {
-    	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
-    	    		}
-    	    	}
-    	    	
-    	    	Integer max = 0;
+            	StatementResult statementResult = tx.run("MATCH (a)-[r:ACTED_IN]->(m) RETURN a.id, count(r) AS connections"
+            			+ " ORDER BY connections DESC");
             	
-    	    	// Get Actor with the highest Count
-    	    	for (String actorId: actorsCount.keySet()) {
-    	    		if (actorsCount.get(actorId) > max) {
-    	    			max = actorsCount.get(actorId);
-    	    			mostProlificActorId = actorId;
-    	    		}
-    	    	}
-    	    	
-    	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
-    	    	
-    	    	statementResult = tx.run("MATCH (a:Actor) WHERE a.id=$id RETURN a.name",
-                        parameters("id", mostProlificActorId));
-    	    	
-    	    	System.out.println(statementResult.hasNext());
-        	}
-        	
-        	session.close();
+            	String queryResult = statementResult.next().toString();
+            	
+            	System.out.println(queryResult);
+            	String[] r = queryResult.split("\"");
+
+            	String actor = r[2];
+            	actor = r[2].substring(0,actor.length()-1);
+            	actor = "\"" + actor + "\"";
+            	System.out.println(actor);
+            	result = this.getActor(actor);
+            	 
+            
+            }
+            
+            session.close();
         }
 		
 		return result;
