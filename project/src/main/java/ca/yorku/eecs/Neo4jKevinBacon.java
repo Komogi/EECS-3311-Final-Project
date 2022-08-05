@@ -167,8 +167,8 @@ public class Neo4jKevinBacon {
             }
             for(int i = 0; i < tmp.size(); i++) {
             	
-            	tmp2=tmp.get(i).split("\"")[2];
-            	tmp2= tmp2.substring(0,tmp2.length()-1);
+            	tmp2=tmp.get(i).split("\"")[1];
+            	tmp2= tmp2.substring(0,tmp2.length());
             	tmp.set(i, tmp2);
             }
 
@@ -178,7 +178,7 @@ public class Neo4jKevinBacon {
             for(int i = 1; i < tmp.size() - 1;i++) {
             	result+= String.format("    \"%s\",\n",tmp.get(i));
             }
-            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
+            result+= String.format("    \"%s\"\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
             
             session.close();
@@ -210,20 +210,25 @@ public class Neo4jKevinBacon {
                 }
             }
            
+            
             for(int i = 0; i < tmp.size(); i++) {
             	
-            	tmp2=tmp.get(i).split("\"")[2];
-            	tmp2= tmp2.substring(0,tmp2.length()-1);
+            	tmp2=tmp.get(i).split("\"")[1];
+            	tmp2= tmp2.substring(0,tmp2.length());
+//            	System.out.println(tmp2);
             	tmp.set(i, tmp2);
             }
 
             result = String.format("{\n \"actorId\": %s,\n", actorId);
             result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+          
+           
             result += "\"movies\": [\n";
             for(int i = 1; i < tmp.size() - 1;i++) {
             	result+= String.format("    \"%s\",\n",tmp.get(i));
+            	
             }
-            result+= String.format("    \"%s\",\n",tmp.get(tmp.size() - 1));
+            result+= String.format("    \"%s\"\n",tmp.get(tmp.size() - 1));
             result+="    ]\n}";
             
             session.close();
@@ -292,6 +297,58 @@ public class Neo4jKevinBacon {
 		return ans;
 	}
 	
+	public String hasRel(String actorId, String movieId) {
+		String[] a = new String[10];
+		String ans = "";
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.id=$x AND  m.id=$y "
+                		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
+                		parameters("x",actorId, "y", movieId));
+
+                ans = node_boolean.single().toString();
+            }
+               
+               a = ans.split(":");
+               
+               int i = 0;  
+               ans="";
+               while(i < 5) {
+            	   ans+= a[1].charAt(i);
+            	   i++;
+               }
+        }
+		return ans;
+	}
+	
+
+	
+//	public String hasActor2(String name) {
+//		String[] a = new String[10];
+//		String ans = "";
+//		try (Session session = driver.session())
+//        {
+//            try (Transaction tx = session.beginTransaction()) {
+//                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.name=$x"
+//                		+ " RETURN a IS NOT NULL AS Predicate" , 
+//                		parameters("x",name));
+//
+//                ans = node_boolean.single().toString();
+//            }
+//               
+//               a = ans.split(":");
+//               
+//               int i = 0;  
+//               ans="";
+//               while(i < 5) {
+//            	   ans+= a[1].charAt(i);
+//            	   i++;
+//               }
+//        }
+//		return ans;
+//	}
+	
 	public String hasMovie(String movieId) {
 		String[] a = new String[10];
 		String ans = "";
@@ -328,7 +385,7 @@ public class Neo4jKevinBacon {
             	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
             			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
             			+ "RETURN length(p)",
-                		parameters("x", actorId, "y", "\"nm0000102\""));
+                		parameters("x", actorId, "y", "nm0000102"));
             	
             	String queryResult = statementResult.next().toString();
             	
@@ -360,7 +417,7 @@ public class Neo4jKevinBacon {
             	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
             			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
             			+ "RETURN p",
-                		parameters("x", actorId, "y", "\"nm0000102\""));
+                		parameters("x", actorId, "y", "nm0000102"));
             	
             	ArrayList<String> records = new ArrayList<String>();
             	
@@ -407,8 +464,8 @@ public class Neo4jKevinBacon {
             	
             	for(int i = 0; i < records.size(); i++) {
                 	
-                	String tmp = records.get(i).split("\"")[2];
-                	tmp = tmp.substring(0, tmp.length()-1);
+                	String tmp = records.get(i).split("\"")[1];
+                	tmp = tmp.substring(0, tmp.length());
                 	records.set(i, tmp);
                 	
                 	// System.out.println(records.get(i));
@@ -441,7 +498,7 @@ public class Neo4jKevinBacon {
             	StatementResult statementResult = tx.run("MATCH (start:Actor {id:$x}), "
             			+ "(end:Actor {id:$y}), p = shortestPath((start)-[:ACTED_IN*]-(end)) "
             			+ "RETURN p",
-                		parameters("x", actorId, "y", "\"nm0000102\""));
+                		parameters("x", actorId, "y", "nm0000102"));
             	
             	if (!statementResult.hasNext()) {
             		result = false;
@@ -643,9 +700,10 @@ public class Neo4jKevinBacon {
             	
             	String[] r = queryResult.split("\"");
 
-            	String actor = r[2];
-            	actor = r[2].substring(0,actor.length()-1);
-            	actor = "\"" + actor + "\"";
+            	String actor = r[1];
+            	System.out.println(actor);
+//            	actor = r[1].substring(0,actor.length()-1);
+//            	actor = "\"" + actor + "\"";
 
             
             

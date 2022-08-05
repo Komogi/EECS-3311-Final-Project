@@ -200,65 +200,104 @@ public class RequestHandler implements HttpHandler{
         
         String name;
         String movieId;
+        String response;
+        try {
+        	if (jsonBody.has("name") && jsonBody.has("movieId")) {
+                
+                name =  jsonBody.getString("name");
+                movieId = jsonBody.getString("movieId");
+                
+                String hasMovie = neo4j.hasMovie(movieId).toLowerCase();
+                if(hasMovie.equals(" true")) {
+                	response = name + " movie already exists";
+                	sendString(request, response, 400);
+                	System.exit(0);
+                }
+                neo4j.addMovie(name, movieId);
+                
+                response = name + " added successfully.";
+                sendString(request, response, 200);
+            }
+            else {
+                response = "The request body is improperly formatted or missing required information.";
+                sendString(request, response, 400);
+            }
+        }
+        finally {
+        	
+        }
         
-        if (jsonBody.has("name") && jsonBody.has("movieId")) {
-            
-            name =  jsonBody.getString("name");
-            movieId = jsonBody.getString("movieId");
-            
-            neo4j.addMovie(name, movieId);
-            
-            String response = name + " added successfully.";
-            sendString(request, response, 200);
-        }
-        else {
-            String response = "The request body is improperly formatted or missing required information.";
-            sendString(request, response, 400);
-        }
 
     }
     
     public void addActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String name;
         String actorId;
+        String response;
         
         // add code for incorrect parameters
-        if (jsonBody.has("name") && jsonBody.has("actorId")) {
-            
-            name =  jsonBody.getString("name");
-            actorId = jsonBody.getString("actorId");
-            
-            neo4j.addActor(name, actorId);
-            
-            String response = name + " added successfully.";
-            sendString(request, response, 200);
+        try {
+        	 if (jsonBody.has("name") && jsonBody.has("actorId")) {
+                 
+                 name =  jsonBody.getString("name");
+                 actorId = jsonBody.getString("actorId");
+                 
+                 String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+                 
+              
+                 
+                 if(actorPresent.equals(" true")) {
+                 	response = name + " actor already exists";
+                 	sendString(request, response, 400);
+                 	System.exit(0);
+                 }
+                 neo4j.addActor(name, actorId);
+                 
+                 response = name + " added successfully.";
+                 sendString(request, response, 200);
+             }
+             else {
+                 response = "The request body is improperly formatted or missing required information.";
+                 sendString(request, response, 400);
+             }
         }
-        else {
-            String response = "The request body is improperly formatted or missing required information.";
-            sendString(request, response, 400);
-        }
+       finally{
+    	   
+       }
     }
     
     public void addRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String actorId;
     	String movieId;
-    	
+    	String response;
     	// TODO: If either actorId or movieId does not exist in the database, return 404
     	// TODO: If relationship already exists, return 400
     	
-    	if (jsonBody.has("actorId") && jsonBody.has("movieId")) {
-    		
-    		actorId = jsonBody.getString("actorId");
-    		movieId = jsonBody.getString("movieId");
-    		
-    		neo4j.addRelationship(actorId, movieId);
-            
-            String response = "ACTED_IN relationship added successfully.";
-            sendString(request, response, 200);
+    	try {
+    		if (jsonBody.has("actorId") && jsonBody.has("movieId")) {
+        		
+        		actorId = jsonBody.getString("actorId");
+        		movieId = jsonBody.getString("movieId");
+        		
+        		String relationshipPresent = neo4j.hasRel(actorId,movieId).toLowerCase();
+                
+                if(relationshipPresent.equals(" true")) {
+                	response ="Relationship already exists";
+                	sendString(request, response, 400);
+                	System.exit(0);
+                }
+        		neo4j.addRelationship(actorId, movieId);
+                
+                response = "ACTED_IN relationship added successfully.";
+                sendString(request, response, 200);
+        	}
+        	else {
+        		response = "The request body is improperly formatted or missing required information.";
+        		sendString(request, response, 400);
+        	}
     	}
-    	else {
-    		String response = "The request body is improperly formatted or missing required information.";
-    		sendString(request, response, 400);
+    	finally {
+    		
     	}
     }
     
@@ -522,7 +561,7 @@ public class RequestHandler implements HttpHandler{
         		response = "Given ActorId not present";
         		sendString(request, response, 404);
         	}
-        	else if (actorId.equals("\"nm0000102\"")){
+        	else if (actorId.equals("nm0000102")){
         		response = String.format("{\n");
                 response += "\"baconNumber\": " + 0 + "\n";
                 response += "}\n";
@@ -558,7 +597,7 @@ public class RequestHandler implements HttpHandler{
         		response = "Given ActorId not present";
         		sendString(request, response, 404);
         	}
-        	else if (actorId.equals("\"nm0000102\"")){
+        	else if (actorId.equals("nm0000102")){
         		response = String.format("{\n");
             	response += "\"baconPath\": [\n";
             	response += String.format("%s,\n", "nm0000102");
