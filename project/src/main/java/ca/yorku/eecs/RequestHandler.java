@@ -318,25 +318,25 @@ public class RequestHandler implements HttpHandler{
     public void addStreamingService(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String name;
     	String streamingServiceId;
+    	String response;
 
     	if (jsonBody.has("name") && jsonBody.has("streamingServiceId")) {
     		
     		name = jsonBody.getString("name");
     		streamingServiceId = jsonBody.getString("streamingServiceId");
     		
-    		String queryResult = neo4j.addStreamingService(name, streamingServiceId);
-    		
-    		if (queryResult == "200") {
-    			String response = name + " added successfully.";
-                sendString(request, response, 200);
-    		}
-    		else if (queryResult == "400") {
-    			String response = "A Streaming service with " + streamingServiceId + " already exists in the database.";
+    		if (neo4j.hasStreamingService(streamingServiceId)) {
+    			response = "A Streaming Service with streamingServiceId: " + streamingServiceId + " already exists in the database.";
                 sendString(request, response, 400);
+    		}
+    		else {
+    			neo4j.addStreamingService(name, streamingServiceId);
+    			response = name + " added successfully.";
+                sendString(request, response, 200);
     		}
     	}
     	else {
-    		String response = "The request body is improperly formatted or missing required information.";
+    		response = "The request body is improperly formatted or missing required information.";
     		sendString(request, response, 400);
     	}
     }
@@ -344,32 +344,38 @@ public class RequestHandler implements HttpHandler{
     public void addStreamingOnRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String movieId;
     	String streamingServiceId;
-    	
-    	// TODO: If either movieId or streamingServiceId does not exist in the database, return 404
-    	// TODO: If relationship already exists, return 400
+    	String response;
     	
     	if (jsonBody.has("movieId") && jsonBody.has("streamingServiceId")) {
     		
     		movieId = jsonBody.getString("movieId");
     		streamingServiceId = jsonBody.getString("streamingServiceId");
     		
-    		String queryResult = neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
-    		
-    		if (queryResult == "200") {
-    			String response = "STREAMING_ON relationship added successfully.";
-                sendString(request, response, 200);
-    		}
-    		else if (queryResult == "400") {
-    			String response = "STREAMING_ON relationship already exists in the database.";
+    		if (neo4j.hasStreamingOnRelationship(movieId, streamingServiceId)) {
+    			response = "STREAMING_ON relationship already exists in the database.";
     			sendString(request, response, 400);
     		}
-    		else if (queryResult == "404") {
-    			String response = "Either movieId or streamingServiceId does not exist in the database.";
+    		else if (!neo4j.hasMovie(movieId).toLowerCase().equals(" true") && !neo4j.hasStreamingService(streamingServiceId)) {
+    			response = "Movie with id: " + movieId + " and Streaming Service with streamingServiceId: "
+    					+ streamingServiceId + " do not exist in the database.";
     			sendString(request, response, 404);
+    		}
+    		else if (!neo4j.hasMovie(movieId).toLowerCase().equals(" true")) {
+    			response = "Movie with id: " + movieId + " does not exist in the database.";
+    			sendString(request, response, 404);
+    		}
+    		else if (!neo4j.hasStreamingService(streamingServiceId)) {
+    			response = "Streaming Service with streamingServiceId " + streamingServiceId + " does not exist in the database.";
+    			sendString(request, response, 404);
+    		}
+    		else {
+    			neo4j.addStreamingOnRelationship(movieId, streamingServiceId);
+    			response = "STREAMING_ON relationship added successfully.";
+                sendString(request, response, 200);
     		}
     	}
     	else {
-    		String response = "The request body is improperly formatted or missing required information.";
+    		response = "The request body is improperly formatted or missing required information.";
     		sendString(request, response, 400);
     	}
     }

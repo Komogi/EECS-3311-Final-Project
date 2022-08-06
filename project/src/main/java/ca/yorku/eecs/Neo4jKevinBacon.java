@@ -57,88 +57,27 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
-	public String addStreamingService(String name, String streamingServiceId) {
-		
-		String result = "200";
+	public void addStreamingService(String name, String streamingServiceId) {
 		
 		try (Session session = driver.session()){
 			
-			try (Transaction tx = session.beginTransaction()) {
-				StatementResult statementResult = tx.run("MATCH (s:StreamingService) "
-						+ "WHERE s.streamingServiceId=$streamingServiceId RETURN count(s)", 
-						parameters("streamingServiceId", streamingServiceId));
-				
-				String queryResult = statementResult.next().toString();
-				
-				// Getting the count
-				queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
-				
-				if (queryResult.equals("1")) {
-					result = "400";
-				}
-				else {
-					 tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
-							parameters("name", name, "streamingServiceId", streamingServiceId));
-				}
-			}
+			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
+					parameters("name", name, "streamingServiceId", streamingServiceId)));
 			
 			session.close();
 		}
-		
-		return result;
 	}
 	
-	public String addStreamingOnRelationship(String movieId, String streamingServiceId) {
-		
-		String result = "200";
+	public void addStreamingOnRelationship(String movieId, String streamingServiceId) {
 		
 		try (Session session = driver.session()){
 			
-			try (Transaction tx = session.beginTransaction()) {
-				
-				StatementResult statementResult = tx.run("MATCH (m:Movie) "
-						+ "WHERE m.id=$id RETURN count(m)", 
-						parameters("id", movieId));
-				
-				String queryResult = statementResult.next().toString();
-				
-				String movieCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
-				
-				statementResult = tx.run("MATCH (s:StreamingService) "
-						+ "WHERE s.streamingServiceId=$streamingServiceId RETURN count(s)", 
-						parameters("streamingServiceId", streamingServiceId));
-				
-				queryResult = statementResult.next().toString();
-				
-				String streamingServiceCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
-				
-				if (movieCountResult.equals("0") || streamingServiceCountResult.equals("0")) {
-					result = "404";
-				}
-				else {
-					statementResult = tx.run("MATCH (m:Movie {id:$x})-[r:STREAMING_ON]->(s:StreamingService {streamingServiceId:$y})\n" + 
-							 "RETURN count(r)\n" , parameters("x", movieId, "y", streamingServiceId));
-					
-					queryResult = statementResult.next().toString();
-					
-					String streamingOnCountResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
-					
-					System.out.println(streamingOnCountResult);
-					
-					if (streamingOnCountResult.equals("1")) {
-						result = "400";
-					}
-					else {
-						tx.run("MATCH (m:Movie {id:$x}), (s:StreamingService {streamingServiceId:$y})\n" + 
-								 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId));
-					}
-				}
-			}
-
+			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {id:$id}), (s:StreamingService {streamingServiceId:$streamingServiceId})"
+					+ "MERGE (m)-[r:STREAMING_ON]->(s)", 
+					parameters("id", movieId, "streamingServiceId", streamingServiceId)));
+			
 			session.close();
 		}
-		
-		return result;
 	}
 	
 	// GET REQUESTS
@@ -425,26 +364,14 @@ public class Neo4jKevinBacon {
             	}
             	
             	for(int i = 0; i < records.size(); i++) {
-                	
-            		//System.out.println(records.get(i));
             		
                 	unprocessed = records.get(i).split("-");
+                
                 }
             	
-            	processed.add(unprocessed[0].substring(unprocessed[0].length() - 2, unprocessed[0].length() - 1));
-            	
-            	
-            	int indexOffset = 1;
-            	
-            	for (int i = 2; i < unprocessed.length; i += 2) {
-            		processed.add(unprocessed[i].substring(1 + indexOffset, 2 + indexOffset));
+            	for (int i = 0; i < unprocessed.length; i += 2) {
+            		processed.add(findId(unprocessed[i]));
             		
-            		if (indexOffset == 1) {
-            			indexOffset--;
-            		}
-            		else {
-            			indexOffset++;
-            		}
             	}
             	/*for(int i =0; i < processed.size(); i++) {
             		System.out.println(processed.get(i));
@@ -484,6 +411,29 @@ public class Neo4jKevinBacon {
         }
         
         return result;
+	}
+	
+	// Private Helper for computeBaconPath to isolate Ids in a path
+	private String findId(String str) {
+		
+		String result = "";
+		boolean startOfNumber = false;
+		boolean endOfNumber = false;
+		int index = 0;
+		
+		while (endOfNumber == false) {
+			if (Character.isDigit(str.charAt(index))) {
+				result += str.charAt(index);
+				startOfNumber = true;
+			}
+			else if (!Character.isDigit(str.charAt(index)) && startOfNumber == true) {
+				endOfNumber = true;
+			}
+			
+			index++;
+		}
+		
+		return result;
 	}
 	
 	public boolean hasPathToKevinBacon(String actorId) {
@@ -758,4 +708,47 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	public boolean hasStreamingService(String streamingServiceId) {
+		boolean result = true;
+		
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (s:StreamingService) "
+            			+ "WHERE s.streamingServiceId=$streamingServiceId RETURN s LIMIT 1",
+            			parameters("streamingServiceId", streamingServiceId));
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
+            }
+            
+            session.close();
+        }
+		
+		return result;
+	}
+	
+	public boolean hasStreamingOnRelationship(String movieId, String streamingServiceId) {
+		boolean result = true;
+		
+		try (Session session = driver.session())
+        {
+            try (Transaction tx = session.beginTransaction()) {
+            	
+            	StatementResult statementResult = tx.run("MATCH (m:Movie {id:$id}), (s:StreamingService {streamingServiceId:$streamingServiceId}) "
+            			+ "WHERE (m)-[:STREAMING_ON]->(s) RETURN m LIMIT 1",
+            			parameters("id", movieId, "streamingServiceId", streamingServiceId));
+            	
+            	if (!statementResult.hasNext()) {
+            		result = false;
+            	}
+            }
+            
+            session.close();
+        }
+		
+		return result;
+	}
 }
