@@ -496,24 +496,26 @@ public class RequestHandler implements HttpHandler{
     
     public void getActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
-    	if(jsonBody.has("actorId")) {
-    		actorId = jsonBody.getString("actorId");
-    		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
-    		// System.out.println(actorPresent);
-        	if(actorPresent.equals(" true")) {
-        		String response = neo4j.getActor(actorId);
-            	sendString(request, response, 200);
+    
+    		if(jsonBody.has("actorId")) {
+        		actorId = jsonBody.getString("actorId");
+        		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+        		// System.out.println(actorPresent);
+            	if(actorPresent.equals(" true")) {
+            		String response = neo4j.getActor(actorId);
+                	sendString(request, response, 200);
+            	}
+            	else {
+            		String response = "Given ActorId does not exist in the database";
+            		sendString(request, response, 404);
+            	}
+            	
         	}
         	else {
-        		String response = "Given ActorId does not exist in the database";
-        		sendString(request, response, 404);
+        		String response = "Request body improperly formatted";
+        		sendString(request, response, 400);
         	}
-        	
-    	}
-    	else {
-    		String response = "Request body improperly formatted";
-    		sendString(request, response, 400);
-    	}
+    	
     	
     	
     }
@@ -521,19 +523,19 @@ public class RequestHandler implements HttpHandler{
     public void hasRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
     	String movieId;
-//    	String response = neo4j.hasRelationship(actorId,movieId);
+
     	
     	String response;
     	
     	if(jsonBody.has("actorId") && jsonBody.has("movieId")) {
         	actorId = jsonBody.getString("actorId");
         	movieId = jsonBody.getString("movieId");
-//        	
+      	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
-//        	
+       	
         	if(actorPresent.equals(" true") && moviePresent.equals(" true")) {
-//        		
+      		
         		response = neo4j.hasRelationship(actorId,movieId);
         		sendString(request, response, 200);
         	}
