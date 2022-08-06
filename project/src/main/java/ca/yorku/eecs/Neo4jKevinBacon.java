@@ -249,22 +249,34 @@ public class Neo4jKevinBacon {
         {
             try (Transaction tx = session.beginTransaction()) {
                 StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.id=$x AND  m.id=$y "
-                		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
+                		+ "RETURN exists((a)-[:ACTED_IN]->(m))" , 
                 		parameters("x",actorId, "y", movieId));
 
-                ans = node_boolean.single().toString();
+//                ans = node_boolean.single().toString();
+                while(node_boolean.hasNext()) {
+            		ans+=node_boolean.next().toString();
+            	}
+                System.out.println(ans);
             }
-            
+            	
 
                a = ans.split(":");
-               int i = 0;  
+               for(int i = 0; i < a.length; i++) {
+            	   System.out.println(a[i]);
+               }
+              
+               int i = 1;  
                ans="";
-               while(i < 5) {
-            	   ans+= a[1].charAt(i);
+               while(i < 6) {
+            	   ans+= a[2].charAt(i);
             	   i++;
                }
 
         }
+//		System.out.println("\""+ans+"\"");
+		if(ans.toLowerCase().equals("true}")) {
+			ans = "true";
+		}
 		result = "{\n";
 		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
 		 
@@ -304,21 +316,31 @@ public class Neo4jKevinBacon {
         {
             try (Transaction tx = session.beginTransaction()) {
             	StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor), (m:Movie) WHERE a.id=$x AND  m.id=$y "
-                		+ "RETURN ((a)-[:ACTED_IN]->(m)) IS NOT NULL AS Predicate" , 
+                		+ "RETURN exists((a)-[:ACTED_IN]->(m))" , 
                 		parameters("x",actorId, "y", movieId));
 
                 ans = node_boolean.single().toString();
             }
                
-               a = ans.split(":");
+            a = ans.split(":");
+//            for(int i = 0; i < a.length; i++) {
+//         	   System.out.println(a[i]);
+//            }
+           
+            int i = 1;  
+            ans="";
+            while(i < 6) {
+         	   ans+= a[2].charAt(i);
+         	   i++;
+            }
+
+     }
+//		System.out.println("\""+ans+"\"");
+		if(ans.toLowerCase().equals("true}")) {
+			ans = "true";
+		}
                
-               int i = 0;  
-               ans="";
-               while(i < 5) {
-            	   ans+= a[1].charAt(i);
-            	   i++;
-               }
-        }
+        
 		return ans;
 	}
 	

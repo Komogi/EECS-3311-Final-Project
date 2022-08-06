@@ -209,6 +209,7 @@ public class RequestHandler implements HttpHandler{
                 if(hasMovie.equals(" true")) {
                 	response = name + " movie already exists";
                 	sendString(request, response, 400);
+
                 }
                 else {
                 	neo4j.addMovie(name, movieId);
@@ -245,6 +246,7 @@ public class RequestHandler implements HttpHandler{
                  if(actorPresent.equals(" true")) {
                  	response = name + " actor already exists";
                  	sendString(request, response, 400);
+
                  }
                  else {
                 	 neo4j.addActor(name, actorId);
@@ -277,10 +279,11 @@ public class RequestHandler implements HttpHandler{
         		movieId = jsonBody.getString("movieId");
         		
         		String relationshipPresent = neo4j.hasRel(actorId,movieId).toLowerCase();
-                
-                if(relationshipPresent.equals(" true")) {
+                System.out.println(relationshipPresent);
+                if(relationshipPresent.equals("true")) {
                 	response ="Relationship already exists";
                 	sendString(request, response, 400);
+
                 }
                 else {
                 	neo4j.addRelationship(actorId, movieId);
