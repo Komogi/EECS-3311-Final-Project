@@ -74,7 +74,7 @@ public class Neo4jKevinBacon {
 				queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
 				
 				if (queryResult.equals("1")) {
-					result = "404";
+					result = "400";
 				}
 				else {
 					 tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 

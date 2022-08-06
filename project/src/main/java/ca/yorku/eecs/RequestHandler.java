@@ -23,11 +23,9 @@ public class RequestHandler implements HttpHandler{
 
     private Neo4jKevinBacon neo4j;
     private String handleMethod;
-    private Utils utils;
     
     public RequestHandler(Neo4jKevinBacon neo4j) {
         this.neo4j = neo4j;
-        this.utils = new Utils();
     }
     
     @Override
@@ -211,12 +209,13 @@ public class RequestHandler implements HttpHandler{
                 if(hasMovie.equals(" true")) {
                 	response = name + " movie already exists";
                 	sendString(request, response, 400);
-                	System.exit(0);
                 }
-                neo4j.addMovie(name, movieId);
-                
-                response = name + " added successfully.";
-                sendString(request, response, 200);
+                else {
+                	neo4j.addMovie(name, movieId);
+                    
+                    response = name + " added successfully.";
+                    sendString(request, response, 200);
+                }
             }
             else {
                 response = "The request body is improperly formatted or missing required information.";
@@ -235,7 +234,6 @@ public class RequestHandler implements HttpHandler{
         String actorId;
         String response;
         
-        // add code for incorrect parameters
         try {
         	 if (jsonBody.has("name") && jsonBody.has("actorId")) {
                  
@@ -244,17 +242,16 @@ public class RequestHandler implements HttpHandler{
                  
                  String actorPresent = neo4j.hasActor(actorId).toLowerCase();
                  
-              
-                 
                  if(actorPresent.equals(" true")) {
                  	response = name + " actor already exists";
                  	sendString(request, response, 400);
-                 	System.exit(0);
                  }
-                 neo4j.addActor(name, actorId);
-                 
-                 response = name + " added successfully.";
-                 sendString(request, response, 200);
+                 else {
+                	 neo4j.addActor(name, actorId);
+                     
+                     response = name + " added successfully.";
+                     sendString(request, response, 200);
+                 }
              }
              else {
                  response = "The request body is improperly formatted or missing required information.";
@@ -284,12 +281,13 @@ public class RequestHandler implements HttpHandler{
                 if(relationshipPresent.equals(" true")) {
                 	response ="Relationship already exists";
                 	sendString(request, response, 400);
-                	System.exit(0);
                 }
-        		neo4j.addRelationship(actorId, movieId);
-                
-                response = "ACTED_IN relationship added successfully.";
-                sendString(request, response, 200);
+                else {
+                	neo4j.addRelationship(actorId, movieId);
+                    
+                    response = "ACTED_IN relationship added successfully.";
+                    sendString(request, response, 200);
+                }
         	}
         	else {
         		response = "The request body is improperly formatted or missing required information.";
@@ -312,14 +310,12 @@ public class RequestHandler implements HttpHandler{
     		
     		String queryResult = neo4j.addStreamingService(name, streamingServiceId);
     		
-    		System.out.println(queryResult);
-    		
     		if (queryResult == "200") {
     			String response = name + " added successfully.";
                 sendString(request, response, 200);
     		}
     		else if (queryResult == "400") {
-    			String response = name + " already exists in the database.";
+    			String response = "A Streaming service with " + streamingServiceId + " already exists in the database.";
                 sendString(request, response, 400);
     		}
     	}
