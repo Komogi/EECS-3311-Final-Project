@@ -25,6 +25,4 @@ public class App
         server.start(); // DO NOT CHANGE
         System.out.printf("Server started on port %d...\n", PORT); // DO NOT CHANGE
     }
-    
- 
 }
