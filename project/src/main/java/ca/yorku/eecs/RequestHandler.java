@@ -277,9 +277,22 @@ public class RequestHandler implements HttpHandler{
         		
         		actorId = jsonBody.getString("actorId");
         		movieId = jsonBody.getString("movieId");
-        		
+        		String actorPresent = neo4j.hasActor(actorId).toLowerCase();
+        		String moviePresent = neo4j.hasMovie(movieId).toLowerCase();
+        		if(!actorPresent.equals(" true") && !moviePresent.equals(" true")) {
+        			response ="Actor and Movie do not exist";
+                	sendString(request, response, 404);
+        		}
+        		else if(!moviePresent.equals(" true")) {
+        			response ="Movie does not exist";
+                	sendString(request, response, 404);
+        		}
+        		else if(!actorPresent.equals(" true")) {
+        			response ="Actor does not exist";
+                	sendString(request, response, 404);
+        		}
         		String relationshipPresent = neo4j.hasRel(actorId,movieId).toLowerCase();
-                System.out.println(relationshipPresent);
+               
                 if(relationshipPresent.equals("true")) {
                 	response ="Relationship already exists";
                 	sendString(request, response, 400);

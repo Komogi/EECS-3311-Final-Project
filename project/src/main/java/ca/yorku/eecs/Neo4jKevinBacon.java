@@ -346,30 +346,7 @@ public class Neo4jKevinBacon {
 	
 
 	
-//	public String hasActor2(String name) {
-//		String[] a = new String[10];
-//		String ans = "";
-//		try (Session session = driver.session())
-//        {
-//            try (Transaction tx = session.beginTransaction()) {
-//                StatementResult node_boolean = tx.run("OPTIONAL MATCH (a:Actor) WHERE a.name=$x"
-//                		+ " RETURN a IS NOT NULL AS Predicate" , 
-//                		parameters("x",name));
-//
-//                ans = node_boolean.single().toString();
-//            }
-//               
-//               a = ans.split(":");
-//               
-//               int i = 0;  
-//               ans="";
-//               while(i < 5) {
-//            	   ans+= a[1].charAt(i);
-//            	   i++;
-//               }
-//        }
-//		return ans;
-//	}
+
 	
 	public String hasMovie(String movieId) {
 		String[] a = new String[10];
