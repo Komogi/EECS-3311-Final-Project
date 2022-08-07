@@ -34,16 +34,16 @@ public class Neo4jKevinBacon {
 	// PUT REQUESTS
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {name: $name, id: $id})", 
-					parameters("name", name, "id", movieId)));
+			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {Name: $name, id: $id})", 
+					parameters("Name", name, "id", movieId)));
 			session.close();
 		}
 	}
 	
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {name: $name, id: $id})", 
-					parameters("name", name, "id", actorId)));
+			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {Name: $name, id: $id})", 
+					parameters("Name", name, "id", actorId)));
 			session.close();
 		}
 	}
@@ -61,8 +61,8 @@ public class Neo4jKevinBacon {
 		
 		try (Session session = driver.session()){
 			
-			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {name: $name, streamingServiceId: $streamingServiceId})", 
-					parameters("name", name, "streamingServiceId", streamingServiceId)));
+			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {Name: $name, streamingServiceId: $streamingServiceId})", 
+					parameters("Name", name, "streamingServiceId", streamingServiceId)));
 			
 			session.close();
 		}
@@ -91,7 +91,7 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.id=$id RETURN m.name"
+                StatementResult node_boolean = tx.run("MATCH(m:Movie) WHERE m.id=$id RETURN m.Name"
                         ,parameters("id", movieId) );
 
                 StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE m.id=$id RETURN a.id",parameters("id",movieId));
@@ -135,7 +135,7 @@ public class Neo4jKevinBacon {
         try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
-                StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.id=$id RETURN a.name"
+                StatementResult node_boolean = tx.run("MATCH(a:Actor) WHERE a.id=$id RETURN a.Name"
                         ,parameters("id", actorId) );
 
                 StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$id RETURN m.id",parameters("id",actorId));
