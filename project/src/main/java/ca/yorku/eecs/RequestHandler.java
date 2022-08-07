@@ -111,88 +111,15 @@ public class RequestHandler implements HttpHandler{
 	       }
 		}
     	
-    	/*
-        String query = uri.getQuery();
-        
-        ArrayList<String> splitRawPath = splitRawPath(rawPath);
-    	
-        if (splitRawPath.get(splitRawPath.size() - 1) == "v1") {
-        	// throw error, send string?
-        }
-        else {
-        	handleMethod = splitRawPath.get(splitRawPath.size() - 1);
-        }
-    	
-        try {
-             if(request.getRequestMethod().equals("PUT")) {
-            	 
-                 switch(handleMethod) {
-	                 case "addMovie":
-	                	 addMovie(request, splitQuery(query));
-	                	 break;
-	                	 
-	                 case "addActor":
-	                	 addActor(request, splitQuery(query));
-	                	 break;
-	                	 
-	                 case "addRelationship":
-	                	 addRelationship(request, splitQuery(query));
-	                	 break;
-	                	 
-	                 case "addStreamingService":
-	                	 addStreamingService(request, splitQuery(query));
-	                	 break;
-	                	 
-	                 case "addStreamingOnRelationship":
-	                	 addStreamingOnRelationship(request, splitQuery(query));
-	                	 break;
-                 }
-             }
-             else if (request.getRequestMethod().equals("GET")) {
-            	 // TODO
-            	 switch(handleMethod) {
-					case "getMovie":
-						getMovie(request, splitQuery(query));
-						break;
-						
-					case "getActor":
-						getActor(request, splitQuery(query));
-						break;
-						
-					case "hasRelationship":
-						hasRelationship(request, splitQuery(query));
-						break;
-						
-					case "computeBaconNumber":
-						computeBaconNumber(request, splitQuery(query));
-						break;
-						
-					case "computeBaconPath":
-						computeBaconPath(request, splitQuery(query));
-						break;
-
-            	 	 case "getMoviesOnStreamingService":
-            	 		 getMoviesOnStreamingService(request, splitQuery(query));
-            	 		 break;
-            	 
-	                 case "getActorNumber":
-	                	 getActorNumber(request, splitQuery(query));
-	                	 break;
-	                	 
-	                 case "getMostProlificActor":
-	                	 getMostProlificActor(request);
-	                	 break;
-	             }
-             } 
-             else {
-            	 sendString(request, "Request not found\n", 404);
-             }
-        } catch (Exception e) {
-        	e.printStackTrace();
-        	sendString(request, "Server error\n", 500);
-        }
-        */
+   
     
+    /* 
+     * Handles adding a Movie Node to the database and sends an appropriate response
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
     public void addMovie(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
         
         String name;
@@ -229,6 +156,13 @@ public class RequestHandler implements HttpHandler{
 
     }
     
+    /* 
+     * Handles adding an Actor Node to the database and sends an appropriate response
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
     public void addActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String name;
         String actorId;
@@ -264,6 +198,13 @@ public class RequestHandler implements HttpHandler{
        }
     }
     
+    /* 
+     * Handles adding an ACTED_IN Relationship between Actor and Movie to the database and sends an appropriate response
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
     public void addRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String actorId;
     	String movieId;
@@ -477,6 +418,14 @@ public class RequestHandler implements HttpHandler{
     	}
     }
     
+    /* 
+     * Handles getting a Movie from the database and sends an appropriate response
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
+    
     public void getMovie(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	
     	String movieId;
@@ -500,10 +449,13 @@ public class RequestHandler implements HttpHandler{
     	
     }
     
-//    public void getActor(HttpExchange request,String actorId) throws IOException{
-//    	String response = neo4j.getActor(actorId);
-//    	sendString(request, response, 200);
-//    }
+    /* 
+     * Handles getting an Actor from the database and sends an appropriate response
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
     
     public void getActor(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
@@ -530,6 +482,14 @@ public class RequestHandler implements HttpHandler{
     	
     	
     }
+    
+    /* 
+     * Handles getting the result of whether a relationship exists between an Actor and a Movie
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
     
     public void hasRelationship(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException{
     	String actorId;
@@ -571,17 +531,24 @@ public class RequestHandler implements HttpHandler{
 		
     }
     
+    /* 
+     * Handles computing the Bacon Number
+     * 
+     * @param     request         request to the api
+     * @param     jsonBody        JSON representation of the request body
+     * @return    void
+     */
+    
     public void computeBaconNumber(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     	String actorId;
     	String response;
     	
     	if(jsonBody.has("actorId")) {
         	actorId = jsonBody.getString("actorId");
-//        	
+       	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
-        	// System.out.println(actorId);
-//        	
+
         	if(!actorPresent.equals(" true")){
         		response = "Given ActorId not present";
         		sendString(request, response, 404);
@@ -613,11 +580,11 @@ public class RequestHandler implements HttpHandler{
     	
     	if(jsonBody.has("actorId")) {
         	actorId = jsonBody.getString("actorId");
-//        	
+       	
         	String actorPresent = neo4j.hasActor(actorId).toLowerCase();
         	
-        	// System.out.println(actorPresent);
-//        	
+     
+      	
         	if(!actorPresent.equals(" true")){
         		response = "Given ActorId not present";
         		sendString(request, response, 404);

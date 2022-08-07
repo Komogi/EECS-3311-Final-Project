@@ -32,6 +32,13 @@ public class Neo4jKevinBacon {
 	}
 	
 	// PUT REQUESTS
+	/* 
+	 * Adds an Movie node to the database
+	 * 
+	 * @param 	name		the 'Name' of the Movie to be added
+	 * @param 	movieId	the 'id' of the Movie to be added
+	 * @return 	void
+	 */
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {Name: $name, id: $id})", 
@@ -40,6 +47,14 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
+	/* 
+	 * Adds an Actor node to the database
+	 * 
+	 * @param 	name		the 'Name' of the Actor to be added
+	 * @param 	actorId	the 'id' of the Actor to be added
+	 * @return 	void
+	 */
+	
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {Name: $name, id: $id})", 
@@ -47,6 +62,16 @@ public class Neo4jKevinBacon {
 			session.close();
 		}
 	}
+
+	/* 
+	 * Adds an 'ACTED_IN' Relationship between the given Actor and Movie node
+	 * 
+	 * @param 	actorId		the 'id' of the Actor who has 'ACTED_IN' a Movie
+	 * @param 	movieId		the 'id' of the Movie being 'ACTED_IN'
+	 * 
+	 * @return 	void
+	 */
+	
 	
 	public void addRelationship(String actorId, String movieId) {
 		try (Session session = driver.session()){
@@ -81,12 +106,18 @@ public class Neo4jKevinBacon {
 	}
 	
 	// GET REQUESTS
-	 
+	/* 
+	 * Gets the Name of the given Movie and list of Actors Acting in it
+	 * 
+	 * @param 	movieId		the 'id' of the Movie we want to Get
+	 * 			
+	 * @return 	result		String containing the movieId, Name and all the Actors Acting in the Movie
+	 */
 
 	public String getMovie(String movieId) {
 		String result = "";
-		String tmp2 = "";
-        ArrayList<String> tmp = new ArrayList<String>();
+		String processedRecords = "";
+        ArrayList<String> records = new ArrayList<String>();
         
         try (Session session = driver.session())
         {
@@ -98,26 +129,26 @@ public class Neo4jKevinBacon {
                 
                 while(node_boolean.hasNext()) {
                     
-                    tmp.add(node_boolean.next().toString());
+                    records.add(node_boolean.next().toString());
                 }
                 while(node_boolean2.hasNext()) {
-                    tmp.add(node_boolean2.next().toString());
+                    records.add(node_boolean2.next().toString());
                 }
             }
-            for(int i = 0; i < tmp.size(); i++) {
+            for(int i = 0; i < records.size(); i++) {
             	
-            	tmp2=tmp.get(i).split("\"")[1];
-            	tmp2= tmp2.substring(0,tmp2.length());
-            	tmp.set(i, tmp2);
+            	processedRecords=records.get(i).split("\"")[1];
+            	processedRecords= processedRecords.substring(0,processedRecords.length());
+            	records.set(i, processedRecords);
             }
 
             result = String.format("{\n \"movieId\": %s,\n", movieId);
-            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+            result += String.format(" \"name\": \"%s\",\n ",records.get(0) );
             result += "\"actors\": [\n";
-            for(int i = 1; i < tmp.size() - 1;i++) {
-            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            for(int i = 1; i < records.size() - 1;i++) {
+            	result+= String.format("    \"%s\",\n",records.get(i));
             }
-            result+= String.format("    \"%s\"\n",tmp.get(tmp.size() - 1));
+            result+= String.format("    \"%s\"\n",records.get(records.size() - 1));
             result+="    ]\n}";
             
             session.close();
@@ -125,12 +156,18 @@ public class Neo4jKevinBacon {
         return result;
 	}
 	
-	
+	/* 
+	 * Gets the Name of the given Actor and list of Movies the Actor is Acting in
+	 * 
+	 * @param 	actorId		'id' of the Actor we want to Get
+	 * 			
+	 * @return 	result		String containing the actorId, Name and all the Movies the Actor has ACTED_IN
+	 */
 	public String getActor(String actorId) {
 		String result = "";
-		String tmp2 = "";
+		String processedRecords = "";
         
-        ArrayList<String> tmp = new ArrayList<String>();
+        ArrayList<String> records = new ArrayList<String>();
         
         try (Session session = driver.session())
         {
@@ -141,33 +178,33 @@ public class Neo4jKevinBacon {
                 StatementResult node_boolean2 = tx.run("MATCH (a)-[:ACTED_IN]->(m) WHERE a.id=$id RETURN m.id",parameters("id",actorId));
                 
                 while(node_boolean.hasNext()) {
-                    tmp.add(node_boolean.next().toString());
+                    records.add(node_boolean.next().toString());
                 }
                 
                 while(node_boolean2.hasNext()) {
-                    tmp.add(node_boolean2.next().toString());
+                    records.add(node_boolean2.next().toString());
                 }
             }
            
             
-            for(int i = 0; i < tmp.size(); i++) {
+            for(int i = 0; i < records.size(); i++) {
             	
-            	tmp2=tmp.get(i).split("\"")[1];
-            	tmp2= tmp2.substring(0,tmp2.length());
-//            	System.out.println(tmp2);
-            	tmp.set(i, tmp2);
+            	processedRecords=records.get(i).split("\"")[1];
+            	processedRecords= processedRecords.substring(0,processedRecords.length());
+
+            	records.set(i, processedRecords);
             }
 
             result = String.format("{\n \"actorId\": %s,\n", actorId);
-            result += String.format(" \"name\": \"%s\",\n ",tmp.get(0) );
+            result += String.format(" \"name\": \"%s\",\n ",records.get(0) );
           
            
             result += "\"movies\": [\n";
-            for(int i = 1; i < tmp.size() - 1;i++) {
-            	result+= String.format("    \"%s\",\n",tmp.get(i));
+            for(int i = 1; i < records.size() - 1;i++) {
+            	result+= String.format("    \"%s\",\n",records.get(i));
             	
             }
-            result+= String.format("    \"%s\"\n",tmp.get(tmp.size() - 1));
+            result+= String.format("    \"%s\"\n",records.get(records.size() - 1));
             result+="    ]\n}";
             
             session.close();
@@ -175,14 +212,19 @@ public class Neo4jKevinBacon {
         return result;
 	}
 	
-//	"MATCH (a:Actor), (m:Movie) WHERE a.actorId=$x AND  m.movieId=$y "
-//+ "RETURN EXISTS ((a)-[:ACTED_IN]->(m))" , 
-//parameters("x",actorId, "y", movieId)));
+	/* 
+	 * Tells if the given actorId and movieId have an ACTED_IN Relationship between them or not
+	 * 
+	 * @param 	movieId		the 'id' of the Movie we want to Get
+	 * 			
+	 * @return 	result		String containing the actorId, movieId and a boolean telling if there is an
+	 * 						ACTED_IN Relationship present between the given Actor and Movie
+	 */
 	
 	public String hasRelationship(String actorId, String movieId) {
 		String result = "";
-		String[] a = new String[10];
-		String ans = "";
+		String[] splitRecords = new String[10];
+		String records = "";
 		
 		try (Session session = driver.session())
         {
@@ -191,41 +233,48 @@ public class Neo4jKevinBacon {
                 		+ "RETURN exists((a)-[:ACTED_IN]->(m))" , 
                 		parameters("x",actorId, "y", movieId));
 
-//                ans = node_boolean.single().toString();
+
                 while(node_boolean.hasNext()) {
-            		ans+=node_boolean.next().toString();
+            		records+=node_boolean.next().toString();
             	}
-                System.out.println(ans);
+               
             }
             	
 
-               a = ans.split(":");
-               for(int i = 0; i < a.length; i++) {
-            	   System.out.println(a[i]);
-               }
+               splitRecords = records.split(":");
+              
               
                int i = 1;  
-               ans="";
+               records="";
                while(i < 6) {
-            	   ans+= a[2].charAt(i);
+            	   records+= splitRecords[2].charAt(i);
             	   i++;
                }
 
         }
-//		System.out.println("\""+ans+"\"");
-		if(ans.toLowerCase().equals("true}")) {
-			ans = "true";
+
+		if(records.toLowerCase().equals("true}")) {
+			records = "true";
 		}
 		result = "{\n";
-		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,ans.toLowerCase());
+		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,records.toLowerCase());
 		 
 		return result;
 	}
 	
+	/* 
+	 * Tells if Database base contains the given Actor node or not
+	 * 
+	 * @param 	actorId		'id' of the Actor we want to check 
+	 * 			
+	 * @return 	result		String saying 'true' or 'false' depending on if the database contains the given
+	 * 						actorId or not
+	 */
+	
 	public String hasActor(String actorId) {
-//		boolean result = false;
+
 		String[] a = new String[10];
-		String ans = "";
+		String result = "";
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -233,24 +282,33 @@ public class Neo4jKevinBacon {
                 		+ " RETURN a IS NOT NULL AS Predicate" , 
                 		parameters("x",actorId));
 
-                ans = node_boolean.single().toString();
+                result = node_boolean.single().toString();
             }
                
-               a = ans.split(":");
+               a = result.split(":");
                
                int i = 0;  
-               ans="";
+               result="";
                while(i < 5) {
-            	   ans+= a[1].charAt(i);
+            	   result+= a[1].charAt(i);
             	   i++;
                }
         }
-		return ans;
+		return result;
 	}
+	
+	/* 
+	 * Tells if there exists a Relationship between the given Actor and Movie
+	 * 
+	 * @param 	actorId		'id' of the Actor we want to check 
+	 * 			
+	 * @return 	result		String saying 'true' or 'false' depending on if the database contains a Relationship 
+	 * 						between the given actorId and movieId
+	 */
 	
 	public String hasRel(String actorId, String movieId) {
 		String[] a = new String[10];
-		String ans = "";
+		String result = "";
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -258,38 +316,41 @@ public class Neo4jKevinBacon {
                 		+ "RETURN exists((a)-[:ACTED_IN]->(m))" , 
                 		parameters("x",actorId, "y", movieId));
 
-                ans = node_boolean.single().toString();
+                result = node_boolean.single().toString();
             }
                
-            a = ans.split(":");
-//            for(int i = 0; i < a.length; i++) {
-//         	   System.out.println(a[i]);
-//            }
-           
+            a = result.split(":");
+
             int i = 1;  
-            ans="";
+            result="";
             while(i < 6) {
-         	   ans+= a[2].charAt(i);
+         	   result+= a[2].charAt(i);
          	   i++;
             }
 
      }
-//		System.out.println("\""+ans+"\"");
-		if(ans.toLowerCase().equals("true}")) {
-			ans = "true";
+
+		if(result.toLowerCase().equals("true}")) {
+			result = "true";
 		}
                
         
-		return ans;
+		return result;
 	}
 	
 
-	
+	/* 
+	 * Tells if Database base contains the given Movie node or not
+	 * 
+	 * @param 	movieId		'id' of the Movie we want to check 
+	 * 			
+	 * @return 	result		String saying 'true' or 'false' depending on if the database contains the given
+	 * 					movieId or not
+	 */
 
-	
 	public String hasMovie(String movieId) {
 		String[] a = new String[10];
-		String ans = "";
+		String result = "";
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -297,21 +358,28 @@ public class Neo4jKevinBacon {
                 		+ " RETURN m IS NOT NULL AS Predicate" , 
                 		parameters("x",movieId));
 
-                ans = node_boolean.single().toString();
+                result = node_boolean.single().toString();
             }
               
-               a = ans.split(":");
+               a = result.split(":");
                
                int i = 0;  
-               ans="";
+               result="";
                while(i < 5) {
-            	   ans+= a[1].charAt(i);
+            	   result+= a[1].charAt(i);
             	   i++;
                }
         }
-		return ans;
+		return result;
 	}
 	
+	/*
+	 * Computes the Bacon Number
+	 * 
+	 * @param 	actorId		'id' of the Actor we want to calculate the Bacon Number for
+	 * 
+	 * @return 	String containing the baconNumber of the given Actor
+	 */
 	public String computeBaconNumber(String actorId) {
 		
 		String result = "";
