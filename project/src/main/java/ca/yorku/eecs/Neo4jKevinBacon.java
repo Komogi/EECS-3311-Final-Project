@@ -486,14 +486,19 @@ public class Neo4jKevinBacon {
                 while(moviesOnStreamingServiceResult.hasNext()) {
                     records.add(moviesOnStreamingServiceResult.next().toString());
                 }
-                
+                for(int i = 0; i < records.size(); i++) {
+                	System.out.println(records.get(i));
+                }
                 for(int i = 0; i < records.size(); i++) {
                 	
-                	tmp = records.get(i).split("\"")[2];
-                	tmp = tmp.substring(0, tmp.length() - 1);
+                	tmp = records.get(i).split("\"")[1];
+                	tmp = tmp.substring(0, tmp.length());
                 	records.set(i, tmp);
                 }
-
+                
+                for(int i = 0; i < records.size(); i++) {
+                	System.out.println(records.get(i));
+                }
                 result = String.format("{\n");
                 result += "\"movies\": [\n";
                 for(int i = 0; i < records.size() - 1; i++) {

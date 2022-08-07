@@ -384,12 +384,13 @@ public class RequestHandler implements HttpHandler{
     	String streamingServiceId;
     	String response;
     	
+    	
     	// TODO: If streamingServiceId does not exist in the datbaase, return 404
     	
     	if (jsonBody.has("streamingServiceId")) {
     		
     		streamingServiceId = jsonBody.getString("streamingServiceId");
-            
+            System.out.println(streamingServiceId);
             if (!neo4j.hasStreamingService(streamingServiceId)) {
             	response = "There exists no Streaming Service with streamingServiceId:" + streamingServiceId + " in the database.";
             	sendString(request, response, 404);
