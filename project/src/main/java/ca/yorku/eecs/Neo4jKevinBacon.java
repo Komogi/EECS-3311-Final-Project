@@ -480,38 +480,27 @@ public class Neo4jKevinBacon {
         {
             try (Transaction tx = session.beginTransaction()) {
             	
-            	StatementResult statementResult = tx.run("MATCH (s) WHERE s.streamingServiceId=$x RETURN count(s)",
+            	StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.id",
                 		parameters("x", streamingServiceId));
-            	
-            	String queryResult = statementResult.next().toString();
-            	String streamingServiceCount = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
-            	
-            	if (streamingServiceCount.equals("0")) {
-            		result = "404";
-            	}
-            	else {
-            		StatementResult moviesOnStreamingServiceResult = tx.run("MATCH (m)-[:STREAMING_ON]->(s) WHERE s.streamingServiceId=$x RETURN m.id",
-                    		parameters("x", streamingServiceId));
 
-                    while(moviesOnStreamingServiceResult.hasNext()) {
-                        records.add(moviesOnStreamingServiceResult.next().toString());
-                    }
-                    
-                    for(int i = 0; i < records.size(); i++) {
-                    	
-                    	tmp = records.get(i).split("\"")[2];
-                    	tmp = tmp.substring(0, tmp.length() - 1);
-                    	records.set(i, tmp);
-                    }
+                while(moviesOnStreamingServiceResult.hasNext()) {
+                    records.add(moviesOnStreamingServiceResult.next().toString());
+                }
+                
+                for(int i = 0; i < records.size(); i++) {
+                	
+                	tmp = records.get(i).split("\"")[2];
+                	tmp = tmp.substring(0, tmp.length() - 1);
+                	records.set(i, tmp);
+                }
 
-                    result = String.format("{\n");
-                    result += "\"movies\": [\n";
-                    for(int i = 0; i < records.size() - 1; i++) {
-                    	result += String.format("    \"%s\",\n", records.get(i));
-                    }
-                    result += String.format("    \"%s\"\n", records.get(records.size() - 1));
-                    result +="    ]\n}";
-            	}
+                result = String.format("{\n");
+                result += "\"movies\": [\n";
+                for(int i = 0; i < records.size() - 1; i++) {
+                	result += String.format("    \"%s\",\n", records.get(i));
+                }
+                result += String.format("    \"%s\"\n", records.get(records.size() - 1));
+                result +="    ]\n}";
             }
             
             session.close();
@@ -646,15 +635,12 @@ public class Neo4jKevinBacon {
             	
             	String queryResult = statementResult.next().toString();
             	
-            	
             	String[] r = queryResult.split("\"");
 
             	String actor = r[1];
             	System.out.println(actor);
 //            	actor = r[1].substring(0,actor.length()-1);
 //            	actor = "\"" + actor + "\"";
-
-            
             
             	result = this.getActor(actor);            
 

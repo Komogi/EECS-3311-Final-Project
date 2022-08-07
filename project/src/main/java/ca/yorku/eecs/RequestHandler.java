@@ -30,7 +30,6 @@ public class RequestHandler implements HttpHandler{
     
     @Override
     public void handle(HttpExchange request) throws IOException {
-        // TODO Auto-generated method stub
     	
     	URI uri = request.getRequestURI();
     	String rawPath = uri.getRawPath();
@@ -383,6 +382,7 @@ public class RequestHandler implements HttpHandler{
    public void getMoviesOnStreamingService(HttpExchange request, JSONObject jsonBody) throws IOException, JSONException {
     
     	String streamingServiceId;
+    	String response;
     	
     	// TODO: If streamingServiceId does not exist in the datbaase, return 404
     	
@@ -390,19 +390,17 @@ public class RequestHandler implements HttpHandler{
     		
     		streamingServiceId = jsonBody.getString("streamingServiceId");
             
-            String result = neo4j.getMoviesOnStreamingService(streamingServiceId);
-            
-            if (result == "404") {
-            	String response = "There exists no Streaming Service with streamingServiceId:" + streamingServiceId + " in the database.";
+            if (!neo4j.hasStreamingService(streamingServiceId)) {
+            	response = "There exists no Streaming Service with streamingServiceId:" + streamingServiceId + " in the database.";
             	sendString(request, response, 404);
             }
             else {
-            	String response = result;
+            	response = neo4j.getMoviesOnStreamingService(streamingServiceId);;
             	sendString(request, response, 200);
             }
     	}
     	else {
-    		String response = "The request body is improperly formatted or missing required information.";
+    		response = "The request body is improperly formatted or missing required information.";
     		sendString(request, response, 400);
     	}
     }
