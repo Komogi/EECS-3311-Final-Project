@@ -35,7 +35,7 @@ public class Neo4jKevinBacon {
 	public void addMovie(String name, String movieId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (m:Movie {Name: $name, id: $id})", 
-					parameters("Name", name, "id", movieId)));
+					parameters("name", name, "id", movieId)));
 			session.close();
 		}
 	}
@@ -43,7 +43,7 @@ public class Neo4jKevinBacon {
 	public void addActor(String name, String actorId) {
 		try (Session session = driver.session()){
 			session.writeTransaction(tx -> tx.run("MERGE (a:Actor {Name: $name, id: $id})", 
-					parameters("Name", name, "id", actorId)));
+					parameters("name", name, "id", actorId)));
 			session.close();
 		}
 	}
@@ -62,7 +62,7 @@ public class Neo4jKevinBacon {
 		try (Session session = driver.session()){
 			
 			session.writeTransaction(tx -> tx.run("MERGE (s:StreamingService {Name: $name, streamingServiceId: $streamingServiceId})", 
-					parameters("Name", name, "streamingServiceId", streamingServiceId)));
+					parameters("name", name, "streamingServiceId", streamingServiceId)));
 			
 			session.close();
 		}
