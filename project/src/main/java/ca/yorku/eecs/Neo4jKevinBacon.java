@@ -1,13 +1,9 @@
 package ca.yorku.eecs;
+
 import static org.neo4j.driver.v1.Values.parameters;
 
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.json.JSONObject;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
@@ -16,15 +12,15 @@ import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
 
-import com.sun.net.httpserver.HttpExchange;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Neo4jKevinBacon {
 
 	private Driver driver;
 	private String uriDb;
 	
+	/* 
+     * Constructor for the Neo4j database
+	 *
+     */
 	public Neo4jKevinBacon() {
 		uriDb = "bolt://localhost:7687"; // may need to change if you used a different port for your DBMS
 		Config config = Config.builder().withoutEncryption().build();
@@ -82,6 +78,13 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
+	/* 
+     * Adds an StreamingService Node to the database
+     * 
+     * @param     name					the "name" of the Streaming Service to be added
+     * @param     streamingServiceId    the "streamingServiceId" of the Streaming Service to be added
+     * @return    void
+     */
 	public void addStreamingService(String name, String streamingServiceId) {
 		
 		try (Session session = driver.session()){
@@ -93,6 +96,13 @@ public class Neo4jKevinBacon {
 		}
 	}
 	
+	/* 
+     * Adds an Streaming_On relationship between a given Movie and StreamingService to the database
+     * 
+     * @param     movieId				the "id" of the Movie involved in the Streaming_On relationship
+     * @param     streamingServiceId    the "streamingServiceId" of the Streaming Service involved in the Streaming_On relationship
+     * @return    void
+     */
 	public void addStreamingOnRelationship(String movieId, String streamingServiceId) {
 		
 		try (Session session = driver.session()){
@@ -113,7 +123,6 @@ public class Neo4jKevinBacon {
 	 * 			
 	 * @return 	result		String containing the movieId, Name and all the Actors Acting in the Movie
 	 */
-
 	public String getMovie(String movieId) {
 		String result = "";
 		String processedRecords = "";
@@ -185,7 +194,6 @@ public class Neo4jKevinBacon {
                     records.add(node_boolean2.next().toString());
                 }
             }
-           
             
             for(int i = 0; i < records.size(); i++) {
             	
@@ -198,7 +206,6 @@ public class Neo4jKevinBacon {
             result = String.format("{\n \"actorId\": %s,\n", actorId);
             result += String.format(" \"name\": \"%s\",\n ",records.get(0) );
           
-           
             result += "\"movies\": [\n";
             for(int i = 1; i < records.size() - 1;i++) {
             	result+= String.format("    \"%s\",\n",records.get(i));
@@ -220,7 +227,6 @@ public class Neo4jKevinBacon {
 	 * @return 	result		String containing the actorId, movieId and a boolean telling if there is an
 	 * 						ACTED_IN Relationship present between the given Actor and Movie
 	 */
-	
 	public String hasRelationship(String actorId, String movieId) {
 		String result = "";
 		String[] splitRecords = new String[10];
@@ -233,29 +239,28 @@ public class Neo4jKevinBacon {
                 		+ "RETURN exists((a)-[:ACTED_IN]->(m))" , 
                 		parameters("x",actorId, "y", movieId));
 
-
                 while(node_boolean.hasNext()) {
             		records+=node_boolean.next().toString();
             	}
                
             }
-            	
 
-               splitRecords = records.split(":");
-              
-              
-               int i = 1;  
-               records="";
-               while(i < 6) {
-            	   records+= splitRecords[2].charAt(i);
-            	   i++;
-               }
+           splitRecords = records.split(":");
+          
+          
+           int i = 1;  
+           records="";
+           while(i < 6) {
+        	   records+= splitRecords[2].charAt(i);
+        	   i++;
+           }
 
         }
 
 		if(records.toLowerCase().equals("true}")) {
 			records = "true";
 		}
+		
 		result = "{\n";
 		result+= String.format(" \"actorId\" : %s,\n \"movieId\" : %s,\n \"hasRelationship\" : %s\n}", actorId,movieId,records.toLowerCase());
 		 
@@ -270,11 +275,11 @@ public class Neo4jKevinBacon {
 	 * @return 	result		String saying 'true' or 'false' depending on if the database contains the given
 	 * 						actorId or not
 	 */
-	
 	public String hasActor(String actorId) {
 
 		String[] a = new String[10];
 		String result = "";
+
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -285,14 +290,14 @@ public class Neo4jKevinBacon {
                 result = node_boolean.single().toString();
             }
                
-               a = result.split(":");
-               
-               int i = 0;  
-               result="";
-               while(i < 5) {
-            	   result+= a[1].charAt(i);
-            	   i++;
-               }
+           a = result.split(":");
+           
+           int i = 0;  
+           result="";
+           while(i < 5) {
+        	   result+= a[1].charAt(i);
+        	   i++;
+           }
         }
 		return result;
 	}
@@ -305,10 +310,10 @@ public class Neo4jKevinBacon {
 	 * @return 	result		String saying 'true' or 'false' depending on if the database contains a Relationship 
 	 * 						between the given actorId and movieId
 	 */
-	
 	public String hasRel(String actorId, String movieId) {
 		String[] a = new String[10];
 		String result = "";
+		
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -320,24 +325,21 @@ public class Neo4jKevinBacon {
             }
                
             a = result.split(":");
-
+           
             int i = 1;  
             result="";
             while(i < 6) {
          	   result+= a[2].charAt(i);
          	   i++;
             }
-
-     }
+        }
 
 		if(result.toLowerCase().equals("true}")) {
 			result = "true";
 		}
                
-        
 		return result;
-	}
-	
+    }
 
 	/* 
 	 * Tells if Database base contains the given Movie node or not
@@ -351,6 +353,7 @@ public class Neo4jKevinBacon {
 	public String hasMovie(String movieId) {
 		String[] a = new String[10];
 		String result = "";
+		
 		try (Session session = driver.session())
         {
             try (Transaction tx = session.beginTransaction()) {
@@ -361,14 +364,14 @@ public class Neo4jKevinBacon {
                 result = node_boolean.single().toString();
             }
               
-               a = result.split(":");
-               
-               int i = 0;  
-               result="";
-               while(i < 5) {
-            	   result+= a[1].charAt(i);
-            	   i++;
-               }
+           a = result.split(":");
+           
+           int i = 0;  
+           result="";
+           while(i < 5) {
+        	   result+= a[1].charAt(i);
+        	   i++;
+           }
         }
 		return result;
 	}
@@ -395,7 +398,6 @@ public class Neo4jKevinBacon {
             	
             	String queryResult = statementResult.next().toString();
             	
-            	//System.out.println(queryResult);
             	queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
             	
             	result = String.format("{\n");
@@ -410,6 +412,12 @@ public class Neo4jKevinBacon {
 		
 	}
 	
+	/* 
+     * Computes and Returns the BaconPath of the Actor with given ActorId
+     * 
+     * @param     actorId		the "Id" of the Actor to calculate the BaconPath from
+     * @return    result		a String representation of the path from the Actor with ActorId to Kevin Bacon
+     */
 	public String computeBaconPath(String actorId) {
 		
 		String result = "";
@@ -441,16 +449,14 @@ public class Neo4jKevinBacon {
             		processed.add(findId(unprocessed[i]));
             		
             	}
-            	/*for(int i =0; i < processed.size(); i++) {
-            		System.out.println(processed.get(i));
-            	}*/
+
             	records = new ArrayList<String>();
             	
             	for(int i = 0; i < processed.size(); i++) {
                 	
             		statementResult = tx.run("MATCH (n) WHERE id(n)=$x RETURN n.id",
                     		parameters("x", Integer.parseInt(processed.get(i))));
-//            		System.out.println(statementResult.hasNext());
+
             		while (statementResult.hasNext()) {         		
                 		records.add(statementResult.next().toString());
                 	}
@@ -461,8 +467,6 @@ public class Neo4jKevinBacon {
                 	String tmp = records.get(i).split("\"")[1];
                 	tmp = tmp.substring(0, tmp.length());
                 	records.set(i, tmp);
-                	
-                	// System.out.println(records.get(i));
                 }
             	
             	result = String.format("{\n");
@@ -481,7 +485,12 @@ public class Neo4jKevinBacon {
         return result;
 	}
 	
-	// Private Helper for computeBaconPath to isolate Ids in a path
+	/* 
+     * Private Helper for compuateBconPath that isolates the Id in a given String
+     * 
+     * @param     str			the String containing the Id
+     * @return    result		the isolated Id
+     */
 	private String findId(String str) {
 		
 		String result = "";
@@ -504,6 +513,12 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if there exists a path from the Actor with given ActorId to Kevin Bacon
+     * 
+     * @param     actorId		the "Id" of the Actor to find the Bacon Path from
+     * @return    result		true if the path exists, false otherwise
+     */
 	public boolean hasPathToKevinBacon(String actorId) {
 		
 		boolean result = true;
@@ -527,17 +542,13 @@ public class Neo4jKevinBacon {
 		
 		return result;
 	}
-
-	public void addMovieStreamingServiceRelationship(String movieId, String streamingServiceId) {
-		try (Session session = driver.session()){
-			session.writeTransaction(tx -> tx.run("MATCH (m:Movie {id:$x}),"
-					+ "(s:StreamingService {streamingServiceId:$y})\n" + 
-					 "MERGE (m)-[r:STREAMING_ON]->(s)\n" , parameters("x", movieId, "y", streamingServiceId)));
-			session.close();
-		}
-	}
 	
-	// TODO: Find all movies that has a STREAMING_ON relationship with the streamingServiceId, and return them
+	/* 
+     * Returns all Movies that are Streaming On the Streaming Service with given streamingServiceId
+     * 
+     * @param     streamingServiceId    the "streamingServiceId" of the Streaming Service of interest
+     * @return    result				a String representation of all Movies that are Streaming On the Streaming Service with given streamingServiceId
+     */
 	public String getMoviesOnStreamingService(String streamingServiceId) {
 		
 		String result = "";
@@ -554,9 +565,7 @@ public class Neo4jKevinBacon {
                 while(moviesOnStreamingServiceResult.hasNext()) {
                     records.add(moviesOnStreamingServiceResult.next().toString());
                 }
-                for(int i = 0; i < records.size(); i++) {
-                	System.out.println(records.get(i));
-                }
+
                 for(int i = 0; i < records.size(); i++) {
                 	
                 	tmp = records.get(i).split("\"")[1];
@@ -564,9 +573,6 @@ public class Neo4jKevinBacon {
                 	records.set(i, tmp);
                 }
                 
-                for(int i = 0; i < records.size(); i++) {
-                	System.out.println(records.get(i));
-                }
                 result = String.format("{\n");
                 result += "\"movies\": [\n";
                 for(int i = 0; i < records.size() - 1; i++) {
@@ -582,6 +588,12 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if any Movies are Streaming On the Streaming Service with given streamingServiceId
+     * 
+     * @param     streamingServiceId    the "streamingServiceId" of the Streaming Service of interest
+     * @return    result				true if at least one Movie is Streaming On the Streaming Service with given streamingServiceId, false otherwise
+     */
 	public boolean hasMoviesOnStreamingService(String streamingServiceId) {
 		
 		boolean result = true;
@@ -601,12 +613,16 @@ public class Neo4jKevinBacon {
 			session.close();
 		}
 		
-		System.out.println(result);
-		
 		return result;
 	}
 	
-	// TOOD: Calculate Actor Number and Return It
+	/* 
+     * Returns the Actor Number from Actor with given firstActorId to Actor with given secondActorId
+     * 
+     * @param    firstActorId   	the "Id" of the Actor from which to calculate the Actor Number from
+     * @param    secondActorId  	the "Id" of the Actor from which to calculate the Actor Number to
+     * @return	 result				a String representation of the ActorNumber of two Actors with given ActorIds
+     */
 	public String getActorNumber(String firstActorId, String secondActorId) {
 		
 		String result = "";
@@ -622,7 +638,6 @@ public class Neo4jKevinBacon {
             	
             	String queryResult = statementResult.next().toString();
             	
-            	//System.out.println(queryResult);
             	queryResult = queryResult.substring(queryResult.length() - 3, queryResult.length() - 2);
             	
             	result = String.format("{\n");
@@ -636,6 +651,13 @@ public class Neo4jKevinBacon {
         return result;
 	}
 	
+	/* 
+     * Determines if there exists a path from Actor with given firstActorId to Actor with given secondActorId
+     * 
+     * @param    firstActorId   	the "Id" of the Actor from which to check the path from
+     * @param    secondActorId  	the "Id" of the Actor from which to check the path to
+     * @return	 result				true if a path exists between Actor with given firstActorId to Actor with given secondActorId, false otherwise
+     */
 	public boolean hasPathFromActorToActor(String firstActorId, String secondActorId) {
 		
 		boolean result = true;
@@ -660,66 +682,11 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
-	// TODO: Calculate Most Prolific Actor and Return It
-//	public String getMostProlificActor() {
-//		
-//		String result = "";
-//		String mostProlificActorId = "";
-//		StatementResult statementResult;
-//		
-//		ArrayList<String> actors = new ArrayList<String>();
-//		HashMap<String, Integer> actorsCount = new HashMap<String, Integer>();
-//		
-//		try (Session session = driver.session())
-//        {
-//        	try (Transaction tx = session.beginTransaction()) {
-//        		statementResult = tx.run("MATCH (a:Actor)-[r:ACTED_IN]->(m:Movie) RETURN a.id");
-//        		
-//        		while (statementResult.hasNext()) {
-//            		actors.add(statementResult.next().toString());
-//            	}
-//            	
-//            	// Isolate actorIDs
-//    	    	for(int i = 0; i < actors.size(); i++) {        	
-//    	         	String tmp = actors.get(i).split("\"")[2];
-//    	         	tmp = tmp.substring(0, tmp.length() - 1);
-//    	         	actors.set(i, tmp);
-//    	        }
-//    	    	
-//    	    	// Add and Count all distinct Actors
-//    	    	for(int i = 0; i < actors.size(); i++) {
-//    	    		if(!actorsCount.containsKey(actors.get(i))) {
-//    	    			actorsCount.put(actors.get(i), 1);
-//    	    		}
-//    	    		else {
-//    	    			actorsCount.put(actors.get(i), actorsCount.get(actors.get(i))+1);
-//    	    		}
-//    	    	}
-//    	    	
-//    	    	Integer max = 0;
-//            	
-//    	    	// Get Actor with the highest Count
-//    	    	for (String actorId: actorsCount.keySet()) {
-//    	    		if (actorsCount.get(actorId) > max) {
-//    	    			max = actorsCount.get(actorId);
-//    	    			mostProlificActorId = actorId;
-//    	    		}
-//    	    	}
-//    	    	
-//    	    	System.out.println("Most Prolific Actor's Id is: " + mostProlificActorId);
-//    	    	
-//    	    	statementResult = tx.run("MATCH (a:Actor) WHERE a.id=$id RETURN a.name",
-//                        parameters("id", mostProlificActorId));
-//    	    	
-//    	    	System.out.println(statementResult.hasNext());
-//        	}
-//        	
-//        	session.close();
-//        }
-//		
-//		return result;
-//	}
-	
+	/* 
+     * Returns the Actor that has acted in the most Movies
+     * 
+     * @return	 result		a String representation of the Actor that has acted in the most Movies
+     */
 	public String getMostProlificActor() {
 		String result = "";
 		
@@ -733,12 +700,8 @@ public class Neo4jKevinBacon {
             	String queryResult = statementResult.next().toString();
             	
             	String[] r = queryResult.split("\"");
-
             	String actor = r[1];
-            	System.out.println(actor);
-//            	actor = r[1].substring(0,actor.length()-1);
-//            	actor = "\"" + actor + "\"";
-            
+
             	result = this.getActor(actor);            
 
             }
@@ -749,6 +712,11 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if there exists Actors in the database
+     * 
+     * @return	 result		true if there are Actors in the database, false otherwise
+     */
 	public boolean hasActors() {
 		boolean result = true;
 		
@@ -770,6 +738,11 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if there exists the ACTED_IN relationship in the database
+     * 
+     * @return	 result		true if there are ACTED_IN relationships in the database, false otherwise
+     */
 	public boolean hasActedInRelationships() {
 		boolean result = true;
 		
@@ -791,6 +764,11 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if there exists a Streaming Service with the given streamingServiceId in the database
+     * 
+     * @return	 result		true if there exists a Streaming Service with the given streamingServiceId in the database, false otherwise
+     */
 	public boolean hasStreamingService(String streamingServiceId) {
 		boolean result = true;
 		
@@ -813,6 +791,13 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	/* 
+     * Determines if there exists the STREAMING_ON relationship between the movie with given movieId and Streaming Service
+     * with given streamingServiceId in the database
+     * 
+     * @return	 result		true if the STREAMING_ON relationship between the movie with given movieId and 
+     * 						Streaming Service with given streamingServiceId exists in the database, false otherwise
+     */
 	public boolean hasStreamingOnRelationship(String movieId, String streamingServiceId) {
 		boolean result = true;
 		

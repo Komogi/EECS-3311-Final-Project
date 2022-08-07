@@ -2,8 +2,6 @@ package ca.yorku.eecs;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-
-import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 
 public class App 
