@@ -9,7 +9,7 @@ getMostProlificActorFail-NoActorsInDatabase
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary
-    ${resp}=    Get Request    localhost    /api/v1/getMostProlificActor    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMostProlificActor    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
 
 addActorPass
@@ -389,35 +389,35 @@ getMoviesOnStreamingServicePass
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    streamingServiceId=s0
-    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    200
 
 getMoviesOnStreamingServicePass-NoMoviesOnStreamingService
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    streamingServiceId=s1
-    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    200
 
 getMoviesOnStreamingServicePass-StreamingServiceIdDoesNotExist
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    streamingServiceId=s654321
-    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
     
 getMoviesOnStreamingServicePass-MissingRequiredInformation
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary
-    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMoviesOnStreamingService    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    400
     
 getActorNumberPass
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a0    secondActorId=nm0000102
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    200
     Dictionary Should Contain Item    ${resp.json()}    actorNumber   1
 
@@ -425,7 +425,7 @@ getActorNumberPass-ActorToThemselves
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a0    secondActorId=a0
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    200
     Dictionary Should Contain Item    ${resp.json()}    actorNumber   0
     
@@ -433,41 +433,41 @@ getActorNumberFail-PathDoesNotExist
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a0    secondActorId=a1
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
     
 getActorNumberFail-FirstActorIdDoesNotExist
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a654321    secondActorId=nm0000102
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
     
 getActorNumberFail-SecondActorIdDoesNotExist
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a0    secondActorId=a654321
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
     
 getActorNumberFail-FirstActorIdAndSecondActorIdDoesNotExist
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    firstActorId=a654321    secondActorId=nm654321
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    404
     
 getActorNumberFail-MissingRequiredInformation
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary
-    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getActorNumber    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    400
     
 getMostProlificActorPass
 	Create Session    localhost    http://localhost:8080
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary
-    ${resp}=    Get Request    localhost    /api/v1/getMostProlificActor    data=${params}    headers=${headers}
+    ${resp}=    Get Request    localhost    /api/v1/getMostProlificActor    json=${params}    headers=${headers}
     Should Be Equal As Strings    ${resp.status_code}    200
     

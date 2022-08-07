@@ -395,6 +395,12 @@ public class RequestHandler implements HttpHandler{
             	response = "There exists no Streaming Service with streamingServiceId:" + streamingServiceId + " in the database.";
             	sendString(request, response, 404);
             }
+            else if (!neo4j.hasMoviesOnStreamingService(streamingServiceId)) {
+            	response = String.format("{\n");
+                response += "\"Movies\": []\n";
+                response += "}\n";
+            	sendString(request, response, 200);
+            }
             else {
             	response = neo4j.getMoviesOnStreamingService(streamingServiceId);;
             	sendString(request, response, 200);

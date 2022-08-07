@@ -514,6 +514,30 @@ public class Neo4jKevinBacon {
 		return result;
 	}
 	
+	public boolean hasMoviesOnStreamingService(String streamingServiceId) {
+		
+		boolean result = true;
+		
+		try (Session session = driver.session()){
+			
+			try (Transaction tx = session.beginTransaction()) {
+				StatementResult statementResult = tx.run("MATCH (m:Movie)-[r:STREAMING_ON]->(s:StreamingService)\n"
+						+ "WHERE s.streamingServiceId=$streamingServiceId RETURN m",
+						parameters("streamingServiceId", streamingServiceId));
+				
+				if (!statementResult.hasNext()) {
+					result = false;
+				}
+			}
+			
+			session.close();
+		}
+		
+		System.out.println(result);
+		
+		return result;
+	}
+	
 	// TOOD: Calculate Actor Number and Return It
 	public String getActorNumber(String firstActorId, String secondActorId) {
 		
